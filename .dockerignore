@@ -1,0 +1,11 @@
+node_modules
+dist
+.git
+.env
+.env.*
+tmp
+.sites-runtime
+*.tsbuildinfo
+README.md
+test-results
+playwright-report

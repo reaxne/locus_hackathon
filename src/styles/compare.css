@@ -1,0 +1,55 @@
+.table-scroll {
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+.comparison-table {
+  border-collapse: collapse;
+  width: 100%;
+  text-align: left;
+  min-width: 780px;
+}
+.comparison-table th,
+.comparison-table td {
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--line);
+  border-right: 1px solid var(--line);
+  font-size: 0.875rem;
+  line-height: 1.8;
+  vertical-align: top;
+}
+.comparison-table th:last-child,
+.comparison-table td:last-child {
+  border-right: 0;
+}
+.comparison-table thead th {
+  position: relative;
+  min-width: 220px;
+  background: #fafbf8;
+}
+.comparison-table th:first-child {
+  min-width: 190px;
+  width: 20%;
+  font-size: 0.8125rem;
+  color: #7e8776;
+  font-weight: 500;
+}
+.comparison-table h3 {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 12px 0 5px;
+}
+.comparison-table small {
+  font-weight: 400;
+  color: #8a9283;
+}
+.comparison-table .remove-compare {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  color: #9aa38e;
+}
+.comparison-table tbody tr:last-child > * {
+  border-bottom: 0;
+}

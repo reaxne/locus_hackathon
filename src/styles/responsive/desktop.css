@@ -1,0 +1,188 @@
+@media (min-width: 1600px) {
+  main {
+    padding: 40px 52px 0;
+  }
+  .overview-columns {
+    grid-template-columns: minmax(0, 1fr) 285px;
+    gap: 30px;
+  }
+  .program-card {
+    padding: 24px 22px 0;
+  }
+  .program-grid {
+    gap: 20px;
+  }
+  .program-card h3 {
+    font-size: 1.125rem;
+  }
+  .program-card .location,
+  .match,
+  .program-facts span {
+    font-size: 0.75rem;
+  }
+  .journey-banner {
+    padding: 35px 42px;
+  }
+  .banner-content h2 {
+    font-size: 2.8rem;
+  }
+  .next-card {
+    padding: 26px;
+  }
+  .page-heading h1 {
+    font-size: 2.2rem;
+  }
+  .program-reason {
+    padding: 9px;
+  }
+  .banner-progress {
+    margin-right: 80px;
+  }
+}
+@media (max-width: 1250px) {
+  .sidebar {
+    width: 208px;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+  .main-shell {
+    margin-left: 208px;
+    width: calc(100% - 208px);
+  }
+  main {
+    padding: 28px 26px 0;
+  }
+  .topbar {
+    padding: 0 26px;
+  }
+  .overview-columns {
+    grid-template-columns: minmax(0, 1fr) 220px;
+    gap: 19px;
+  }
+  .program-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .overview-primary .program-grid {
+    grid-template-columns: 1fr;
+  }
+  .overview-primary .program-card {
+    display: grid;
+    grid-template-columns: 50px minmax(0, 1fr) 90px;
+    column-gap: 12px;
+    padding: 16px;
+    position: relative;
+  }
+  .overview-primary .program-top {
+    grid-column: 1;
+    grid-row: 1/4;
+    margin: 0;
+    align-items: flex-start;
+  }
+  .overview-primary .compare-toggle {
+    position: absolute;
+    right: 14px;
+    top: 14px;
+  }
+  .overview-primary .program-card .location {
+    grid-column: 2;
+    margin-bottom: 5px;
+  }
+  .overview-primary .program-card h3 {
+    grid-column: 2;
+    min-height: 0;
+    font-size: 0.9375rem;
+  }
+  .overview-primary .program-name {
+    grid-column: 2;
+    font-size: 0.75rem;
+  }
+  .overview-primary .match {
+    grid-column: 2;
+    margin: 8px 0 0;
+  }
+  .overview-primary .program-facts {
+    grid-column: 3;
+    grid-row: 2/5;
+    border: 0;
+    padding: 15px 0 0;
+    display: block;
+    text-align: right;
+  }
+  .overview-primary .program-facts > div:last-child {
+    display: none;
+  }
+  .overview-primary .program-reason,
+  .overview-primary .card-link {
+    display: none;
+  }
+  .section-heading h2 {
+    font-size: 1rem;
+  }
+  .section-heading {
+    align-items: flex-start;
+  }
+  .section-heading > .text-link {
+    font-size: 0.6875rem;
+  }
+  .next-card {
+    padding: 18px;
+  }
+  .banner-progress {
+    margin-right: 0;
+    width: 225px;
+  }
+  .banner-content h2 {
+    font-size: 2.25rem;
+  }
+  .banner-content p {
+    max-width: 370px;
+  }
+  .page-heading h1 {
+    font-size: 1.7rem;
+  }
+  .route-milestones {
+    padding: 20px 12px;
+    gap: 7px;
+  }
+  .route-milestones strong {
+    font-size: 0.6875rem;
+  }
+  .route-milestones small {
+    font-size: 0.625rem;
+  }
+  .toast {
+    left: calc(50% + 104px);
+  }
+  .filters ~ .program-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .roadmap-layout {
+    grid-template-columns: minmax(0, 1fr) 235px;
+    gap: 18px;
+  }
+  .progress-panel {
+    padding: 24px;
+  }
+  .diagnosis-grid {
+    grid-template-columns: 1fr 1.2fr;
+    gap: 18px;
+  }
+  .panel {
+    padding: 25px;
+  }
+  .page-heading .button {
+    flex-shrink: 0;
+  }
+  .filters {
+    flex-wrap: wrap;
+  }
+  .filters > .muted {
+    margin-left: 0;
+  }
+  .overview-primary .program-card h3 button {
+    font-size: inherit;
+  }
+  .overview-primary .program-facts strong {
+    font-size: 0.875rem;
+  }
+}

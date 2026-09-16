@@ -1,0 +1,226 @@
+@media (max-width: 760px) {
+  .sidebar {
+    transform: translateX(-100%);
+    width: 245px;
+    transition: transform 0.2s;
+    padding: 27px 20px 0;
+    overflow-y: auto;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+  .sidebar-bottom {
+    padding-top: 35px;
+  }
+  .sidebar-tip {
+    display: none;
+  }
+  .sidebar-profile {
+    margin-top: 10px;
+  }
+  .nav-item {
+    font-size: 0.9375rem;
+    padding: 14px;
+  }
+  .brand {
+    font-size: 2rem;
+  }
+  .workspace strong {
+    font-size: 0.875rem;
+  }
+  .workspace {
+    margin-top: 30px;
+  }
+  .main-shell {
+    width: 100%;
+    margin-left: 0;
+  }
+  .sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 39;
+    background: #192a235c;
+    backdrop-filter: blur(2px);
+    border-radius: 0;
+  }
+  .mobile-menu {
+    display: grid !important;
+  }
+  .topbar {
+    height: 62px;
+    padding: 0 20px;
+  }
+  .breadcrumb {
+    gap: 10px;
+    font-size: 0.75rem;
+  }
+  .breadcrumb-root,
+  .breadcrumb > svg {
+    display: none;
+  }
+  .topbar-right {
+    gap: 14px;
+  }
+  .intake {
+    font-size: 0.6875rem;
+  }
+  .topbar-divider {
+    display: none;
+  }
+  main {
+    padding: 25px 20px 0;
+  }
+  .page-heading {
+    gap: 12px;
+    margin-bottom: 22px;
+  }
+  .page-heading h1 {
+    font-size: 1.7rem;
+  }
+  .page-heading p {
+    font-size: 0.875rem;
+    line-height: 1.8;
+  }
+  .eyebrow {
+    font-size: 0.625rem;
+    letter-spacing: 1.2px;
+  }
+  .journey-banner {
+    padding: 26px;
+    gap: 15px;
+    border-radius: 10px;
+  }
+  .banner-content h2 {
+    font-size: 2.1rem;
+  }
+  .banner-content p {
+    max-width: 330px;
+  }
+  .banner-progress {
+    width: 165px;
+  }
+  .banner-label {
+    font-size: 0.625rem;
+  }
+  .overview-columns {
+    margin-top: 25px;
+  }
+  .program-grid,
+  .filters ~ .program-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .section-heading h2 {
+    font-size: 1.05rem;
+  }
+  .overview-primary .program-card h3 {
+    font-size: 1rem;
+  }
+  .program-card .location {
+    font-size: 0.75rem;
+  }
+  .next-card h2 {
+    font-size: 1.1rem;
+  }
+  .next-card p {
+    font-size: 0.875rem;
+  }
+  .task-time {
+    font-size: 0.75rem;
+  }
+  .profile-snapshot dd {
+    font-size: 0.875rem;
+  }
+  .route-milestones strong {
+    font-size: 0.8125rem;
+  }
+  .route-milestones small {
+    font-size: 0.6875rem;
+  }
+  .page-footer small {
+    font-size: 0.625rem;
+  }
+  .page-footer {
+    margin-top: 28px;
+  }
+  .toast {
+    left: 20px;
+    right: 20px;
+    bottom: 18px;
+    max-width: none;
+    width: auto;
+    transform: none;
+    font-size: 0.8125rem;
+  }
+  .page-heading > .button {
+    font-size: 0.75rem;
+    padding: 10px;
+  }
+  .filters {
+    gap: 10px;
+  }
+  .search-field {
+    max-width: none;
+    flex-basis: 100%;
+  }
+  .filters > select {
+    font-size: 0.8125rem;
+    min-width: 150px;
+  }
+  .filters > .muted {
+    font-size: 0.75rem;
+  }
+  .compare-bar {
+    bottom: 12px;
+    padding: 13px;
+  }
+  .compare-bar > span {
+    font-size: 0.75rem;
+  }
+  .compare-bar .button {
+    font-size: 0.75rem;
+  }
+  .task-row {
+    padding: 22px 18px;
+    gap: 15px;
+  }
+  .task-row p {
+    font-size: 0.875rem;
+  }
+  .roadmap-target {
+    padding: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .roadmap-target > div {
+    flex: 1;
+    min-width: 0;
+  }
+  .roadmap-target h3 {
+    font-size: 0.9375rem;
+  }
+  .roadmap-target .text-link {
+    font-size: 0.75rem;
+  }
+  .skip-link {
+    left: 20px;
+  }
+  .modal-header h2 {
+    font-size: 1.2rem;
+  }
+  .modal {
+    padding: 24px;
+  }
+  .form-steps {
+    gap: 20px;
+  }
+  .form-content {
+    min-height: 0;
+  }
+  .form-footer > span {
+    font-size: 0.75rem;
+  }
+  .form-footer .button {
+    font-size: 0.75rem;
+    padding: 11px 13px;
+  }
+}

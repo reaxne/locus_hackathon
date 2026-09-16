@@ -1,0 +1,146 @@
+.roadmap-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 290px;
+  gap: 28px;
+}
+.roadmap-target {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: #edf2e3;
+  padding: 23px;
+  border: 1px solid #e1e8d6;
+  border-radius: 11px;
+  margin-bottom: 26px;
+}
+.roadmap-target small {
+  font-size: 0.625rem;
+  letter-spacing: 1.3px;
+  color: #7b8c64;
+}
+.roadmap-target h3 {
+  font-size: 1rem;
+  line-height: 1.6;
+  margin: 5px 0;
+}
+.roadmap-target > div > span {
+  font-size: 0.75rem;
+  color: #81916b;
+}
+.roadmap-target > .text-link {
+  margin-left: auto;
+}
+.task-list {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.task-row {
+  display: flex;
+  padding: 27px;
+  gap: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.task-row:last-child {
+  border-bottom: 0;
+}
+.task-check {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border: 1px solid #dce3d4;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  background: white;
+  color: #7d9169;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+.task-row.next {
+  background: #fafcf6;
+}
+.task-row.next .task-check {
+  border-color: #8fa76b;
+  box-shadow: 0 0 0 4px #edf4e4;
+}
+.task-row.completed .task-check {
+  background: #d3edac;
+  border-color: #d3edac;
+  color: #416b27;
+}
+.task-row.completed h3 {
+  text-decoration: line-through;
+  color: #859079;
+}
+.task-meta {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-size: 0.6875rem;
+  color: #8b967f;
+  margin-bottom: 10px;
+}
+.task-meta b {
+  font-weight: 650;
+  color: #5d803f;
+  background: #eaf2dd;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+.task-row h3 {
+  font-size: 1rem;
+  line-height: 1.7;
+  margin-bottom: 9px;
+}
+.task-row p {
+  font-size: 0.875rem;
+  color: #7d8873;
+  line-height: 1.9;
+}
+.progress-panel > strong {
+  display: block;
+  font-size: 3.5rem;
+  line-height: 1.5;
+  margin: 13px 0 18px;
+}
+.progress-panel > strong > span {
+  font-size: 1.5rem;
+  color: #8d9b7c;
+}
+.progress-track {
+  height: 7px;
+  border-radius: 6px;
+  background: #eaf0e1;
+  overflow: hidden;
+}
+.progress-track i {
+  height: 100%;
+  display: block;
+  background: #a9d166;
+  transition: width 0.3s;
+}
+.progress-panel > p {
+  font-size: 0.8125rem;
+  color: #8c967f;
+  margin-top: 14px;
+}
+.progress-panel hr {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 23px 0;
+}
+.roadmap-note {
+  margin-top: 20px;
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  color: #98a089;
+}
+.roadmap-note > svg {
+  flex-shrink: 0;
+}
+.roadmap-note p {
+  font-size: 0.75rem;
+}

@@ -1,0 +1,116 @@
+/* Keep all regular labels readable; compact metadata uses a 12px floor. */
+.nav-label,
+.eyebrow,
+.banner-label,
+.banner-footnote,
+.orbit-center small,
+.card-eyebrow,
+.location,
+.match,
+.program-facts span,
+.program-reason,
+.data-note,
+.route-milestones small,
+.page-footer small,
+.page-footer button,
+.snapshot-footer {
+  font-size: 0.75rem;
+}
+.nav-item,
+.button,
+.section-heading p,
+.program-name,
+.card-link,
+.text-link,
+.profile-snapshot dt,
+.profile-snapshot dd,
+.next-card p,
+.task-time {
+  font-size: 0.875rem;
+}
+.program-card h3 {
+  font-size: 1rem;
+}
+.program-facts strong {
+  font-size: 0.9375rem;
+}
+.sidebar-tip p,
+.sidebar-profile small,
+.help-button {
+  font-size: 0.75rem;
+}
+.next-card .button {
+  font-size: 0.8125rem;
+}
+.count-pill {
+  font-size: 0.75rem;
+}
+.route-milestones strong {
+  font-size: 0.8125rem;
+}
+.section-heading p {
+  font-size: 0.8125rem;
+}
+.program-reason {
+  font-size: 0.75rem;
+}
+.text-link {
+  font-size: 0.8125rem;
+}
+.banner-content p {
+  font-size: 0.9375rem;
+}
+.banner-footnote {
+  display: block;
+  margin: 12px 0 0;
+}
+.banner-content h2 {
+  font-size: 2.5rem;
+}
+.journey-banner {
+  padding-top: 28px;
+  padding-bottom: 28px;
+}
+.banner-label {
+  font-size: 0.6875rem;
+}
+.program-grid {
+  gap: 13px;
+}
+.program-card {
+  padding-left: 15px;
+  padding-right: 15px;
+}
+.program-facts {
+  gap: 5px;
+}
+.program-facts span {
+  font-size: 0.6875rem;
+}
+.match {
+  font-size: 0.6875rem;
+}
+.profile-snapshot dd {
+  font-size: 0.8125rem;
+}
+.page-heading p {
+  font-size: 0.9375rem;
+}
+.section-heading .text-link {
+  font-size: 0.75rem;
+}
+.program-card .location {
+  font-size: 0.6875rem;
+}
+.profile-snapshot dt {
+  font-size: 0.75rem;
+}
+.next-card p {
+  font-size: 0.8125rem;
+}
+.banner-progress {
+  margin-right: 42px;
+}
+.progress-caption {
+  font-size: 0.75rem;
+}

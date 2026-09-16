@@ -1,0 +1,37 @@
+.toast {
+  position: fixed;
+  bottom: 25px;
+  left: calc(50% + 115px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--dark);
+  color: #f2f6ea;
+  border: 1px solid #4e6242;
+  border-radius: 10px;
+  padding: 16px 20px;
+  box-shadow: 0 10px 30px #182b2530;
+  font-size: 0.875rem;
+  max-width: 640px;
+  width: max-content;
+  z-index: 100;
+}
+.toast > svg {
+  color: var(--lime);
+  flex-shrink: 0;
+}
+.toast > button {
+  color: #b6c3ad;
+  padding: 3px;
+}
+.storage-warning {
+  padding: 16px 20px;
+  border: 1px solid #e1c49a;
+  background: #fff1de;
+  color: #927443;
+  font-size: 0.875rem;
+  line-height: 1.8;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}

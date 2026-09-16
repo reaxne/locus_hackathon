@@ -1,0 +1,109 @@
+.filters {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+  margin: 26px 0;
+}
+.search-field {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 0 14px;
+  gap: 12px;
+  flex: 1;
+  max-width: 470px;
+}
+.search-field svg {
+  color: #8a9681;
+}
+.search-field input {
+  border: 0;
+  outline: 0;
+  padding: 14px 0;
+  background: transparent;
+  font-size: 0.8125rem;
+  width: 100%;
+}
+.search-field:focus-within {
+  outline: 2px solid #91ae63;
+}
+.filters > select {
+  width: auto;
+  min-width: 180px;
+  margin: 0;
+  font-size: 0.8125rem;
+}
+.filters > .muted {
+  margin-left: auto;
+}
+.filters ~ .program-grid {
+  gap: 22px;
+}
+.filters ~ .program-grid .program-card {
+  padding: 24px 24px 0;
+}
+.filters ~ .program-grid .program-card h3 {
+  min-height: 0;
+  font-size: 1.125rem;
+}
+.filters ~ .program-grid .program-name {
+  font-size: 0.875rem;
+}
+.filters ~ .program-grid .location,
+.filters ~ .program-grid .match,
+.filters ~ .program-grid .program-facts span,
+.filters ~ .program-grid .program-reason {
+  font-size: 0.75rem;
+}
+.filters ~ .program-grid .program-facts strong {
+  font-size: 1rem;
+}
+.filters ~ .program-grid .card-link {
+  font-size: 0.8125rem;
+}
+.compare-bar {
+  background: #edf3e3;
+  border: 1px solid #dce7ca;
+  position: sticky;
+  bottom: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-radius: 10px;
+  margin-top: 25px;
+  box-shadow: 0 8px 30px #26382410;
+}
+.compare-bar > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.875rem;
+}
+.empty-state {
+  min-height: 380px;
+  background: #fff;
+  border: 1px dashed #dce3d7;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+  text-align: center;
+  padding: 35px;
+}
+.empty-state > svg {
+  color: #8aa660;
+}
+.empty-state h2 {
+  font-size: 1.5rem;
+}
+.empty-state p {
+  font-size: 0.9375rem;
+  color: var(--muted);
+  max-width: 530px;
+}

@@ -1,112 +1,76 @@
-import { ArrowRight, Sparkles, Target, CircleCheck, Info, Pencil } from 'lucide-react'
-import { money, programName } from '../model'
-import type { AdmissionController } from '../hooks/useAdmission'
-import DemoDataNote from '../components/DemoDataNote'
+import { ArrowRight, Download } from 'lucide-react'
+import type { Admission } from '../hooks/useAdmission'
+import { Empty, Notice, PageHeading } from '../components/Shared'
+import ProfileSummary from '../components/ProfileSummary'
+import { exportProfile, examLabel } from '../lib/profile'
+import { goalExamNames } from '../types'
+import { Link } from '../lib/router'
 
-type Props = Pick<
-  AdmissionController,
-  'setProfileOpen' | 'profile' | 'isDemo' | 'recommendations' | 'navigate'
->
-
-export default function ProfilePage({ setProfileOpen, profile, isDemo, recommendations, navigate }: Props) {
+export default function ProfilePage({ admission }: { admission: Admission }) {
+  const p = admission.state.profile
+  if (!p)
+    return (
+      <Empty title="Start with one question" href="/diagnosis" action="Begin diagnosis">
+        Tell us about your interests and plans. Your answers save automatically as you go.
+      </Empty>
+    )
   return (
     <>
-      <div className="page-heading">
-        <div>
-          <div className="eyebrow">НАЧНЁМ С ГЛАВНОГО</div>
-          <h1>
-            Твой профиль<span className="lime-period">.</span>
-          </h1>
-          <p>Основа рекомендаций и твоего маршрута поступления.</p>
-        </div>
-        <button className="button primary" onClick={() => setProfileOpen(true)}>
-          <Pencil size={16} />
-          {isDemo ? 'Создать свой профиль' : 'Редактировать'}
+      <PageHeading
+        eyebrow="YOUR PROFILE"
+        title="Your starting point, in one place."
+        description="Edit any answer. Your university matches and roadmap update with your plans."
+        back={admission.state.demoSession ? '/dashboard' : '/universities'}
+      >
+        <button className="button secondary" onClick={() => exportProfile(p)}>
+          <Download size={16} />
+          Export my profile as JSON
         </button>
-      </div>
-      {isDemo && (
-        <div className="info-banner">
-          <Info size={20} />
-          <span>Сейчас показан демо-профиль Алекса. Заполни анкету, чтобы построить свой маршрут.</span>
-        </div>
+      </PageHeading>
+      {admission.state.isDemo && (
+        <Notice>This is an illustrative sample profile. Edit any answer to make it yours.</Notice>
       )}
-      <div className="diagnosis-grid">
-        <section className="panel profile-panel">
-          <span className="large-avatar">{profile.name.slice(0, 1).toUpperCase()}</span>
-          <h2>{profile.name}</h2>
-          <p>
-            {profile.grade} · Бакалавриат {profile.year}
-          </p>
-          <div className="profile-stat-grid">
-            <div>
-              <small>Средний балл</small>
-              <strong>
-                {profile.gpa}
-                <em> / 5</em>
-              </strong>
-            </div>
-            <div>
-              <small>Английский</small>
-              <strong>{profile.ielts ? `IELTS ${profile.ielts}` : 'Не сдавал(а)'}</strong>
-            </div>
+      <section className="panel summary-panel">
+        <div className="section-intro">
+          <div>
+            <span className="eyebrow">YOUR ANSWERS</span>
+            <h2>Goals, strengths and preferences</h2>
           </div>
-          <dl className="profile-details">
-            <div>
-              <dt>Направление</dt>
-              <dd>{profile.interest}</dd>
-            </div>
-            <div>
-              <dt>Страны</dt>
-              <dd>{profile.countries.join(', ')}</dd>
-            </div>
-            <div>
-              <dt>Обучение в год</dt>
-              <dd>до {money(profile.budget)}</dd>
-            </div>
-          </dl>
-        </section>
-        <section className="panel diagnosis">
-          <span className="tag">
-            <Sparkles size={15} />
-            Диагностика профиля
-          </span>
-          <h2>У тебя есть отправная точка.</h2>
-          <p>
-            Цель — {programName(profile.interest)}, набор {profile.year}. Начни с{' '}
-            {recommendations[0].university.name}: этот пример соответствует {recommendations[0].matches} из 5
-            критериев.
-          </p>
-          <h3>
-            <CircleCheck size={18} />
-            На что можно опереться
-          </h3>
-          <ul>
-            {recommendations[0].reasons.map((reason) => (
-              <li key={reason}>{reason}</li>
-            ))}
-          </ul>
-          <h3>
-            <Target size={18} />
-            На что обратить внимание
-          </h3>
-          <ul>
-            {(recommendations[0].gaps.length
-              ? recommendations[0].gaps
-              : [
-                  'Уточнить реальные вступительные требования',
-                  'Учесть проживание, перелёты и визовые расходы',
-                ]
-            ).map((gap) => (
-              <li key={gap}>{gap}</li>
-            ))}
-          </ul>
-          <button className="button dark" onClick={() => navigate('programs')}>
-            Посмотреть подборку
-            <ArrowRight size={17} />
-          </button>
-        </section>
+          <span className="pill">Saved on this device</span>
+        </div>
+        <ProfileSummary admission={admission} />
+      </section>
+      <section className="panel summary-panel">
+        <div className="section-intro">
+          <div>
+            <span className="eyebrow">YOUR EXAM GOALS</span>
+            <h2>Personal targets</h2>
+          </div>
+          <Link className="button secondary" href="/exam-goals">
+            Edit exam goals
+          </Link>
+        </div>
+        <div className="profile-goals">
+          {goalExamNames.map((exam) => (
+            <article key={exam}>
+              <strong>{examLabel(exam)}</strong>
+              <span>Current: {p.exams[exam].score ?? 'Unknown'}</span>
+              <span>Target: {p.examGoals[exam].targetScore ?? 'Not set'}</span>
+              <small>{p.examGoals[exam].targetDate ?? 'No target date'} · personal goal</small>
+            </article>
+          ))}
+        </div>
+        <p className="muted">
+          These targets are yours. They do not mean every university requires these exams.
+        </p>
+      </section>
+      <div className="page-action">
+        <p>Official requirements, fees and deadlines still need checking for your intake.</p>
+        <Link className="button primary" href="/universities">
+          See universities
+          <ArrowRight size={17} />
+        </Link>
       </div>
-      <DemoDataNote />
     </>
   )
 }

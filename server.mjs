@@ -19,7 +19,7 @@ app.get('/{*path}', (req, res) => {
   res.sendFile(`${dist}/index.html`)
 })
 const port = Number(process.env.PORT || 3000)
-const server = app.listen(port, '0.0.0.0', () => console.log(`Vector is listening on port ${port}`))
+const server = app.listen(port, '0.0.0.0', () => console.log(`Static site is listening on port ${port}`))
 for (const signal of ['SIGTERM', 'SIGINT'])
   process.on(signal, () => {
     server.close(() => process.exit(0))

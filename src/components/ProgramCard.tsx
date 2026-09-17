@@ -1,69 +1,80 @@
-import { ArrowUpRight, Check, Plus, MapPin } from 'lucide-react'
-import { money, programName, type Profile, type Recommendation } from '../model'
+import { Check, MapPin, Plus, CircleCheck, CircleHelp } from 'lucide-react'
+import type { Admission } from '../hooks/useAdmission'
+import type { Recommendation } from '../types'
+import { money } from '../data/universities'
+import { External, Fact } from './Shared'
+import SaveOption from './SaveOption'
+import { Link } from '../lib/router'
 
-export default function ProgramCard({
-  item,
-  profile,
-  selected,
-  toggle,
-  details,
-}: {
-  item: Recommendation
-  profile: Profile
-  selected: boolean
-  toggle: () => void
-  details: () => void
-}) {
-  const u = item.university
+export default function ProgramCard({ match, admission }: { match: Recommendation; admission: Admission }) {
+  const { program, university, group, reasons, caveats } = match
+  const selected = admission.state.comparison.includes(program.id)
   return (
-    <article className="program-card">
-      <div className="program-top">
-        <span className={`uni-monogram ${u.color}`}>{u.short}</span>
-        <button
-          className={`compare-toggle ${selected ? 'selected' : ''}`}
-          onClick={toggle}
-          aria-label={`${selected ? 'Убрать из сравнения' : 'Сравнить'} ${u.name}`}
-          aria-pressed={selected}
+    <article className={`program-card panel ${selected ? 'selected' : ''}`} data-program={program.id}>
+      <div className="card-top">
+        <span className={`university-monogram ${university.id}`}>{university.shortName}</span>
+        <span
+          className={`pill ${group === 'Over budget' ? 'warning' : group === 'Needs verification' ? 'subtle' : ''}`}
         >
-          {selected ? <Check size={18} /> : <Plus size={18} />}
+          {group}
+        </span>
+      </div>
+      <p className="university-name">{university.name}</p>
+      <h3>
+        <Link href={`/universities/${program.id}`}>{program.title.value}</Link>
+      </h3>
+      <div className="program-meta">
+        <span>
+          <MapPin size={13} />
+          {university.city}
+        </span>
+        <span>Bachelor's</span>
+        {program.code && <span>{program.code}</span>}
+      </div>
+      <p className="program-description">{program.description}</p>
+      <div className="tuition-block">
+        <span className="small-label">ANNUAL TUITION</span>
+        <Fact fact={program.tuition} profile={admission.state.profile!} format={money} />
+      </div>
+      <div className="reason-section">
+        <strong>
+          <CircleCheck size={16} />
+          Why consider it
+        </strong>
+        <ul>
+          {reasons.map((reason) => (
+            <li key={reason}>{reason}</li>
+          ))}
+        </ul>
+      </div>
+      <div className="caveat-section">
+        <strong>
+          <CircleHelp size={16} />
+          What to verify
+        </strong>
+        <ul>
+          {caveats.map((caveat) => (
+            <li key={caveat}>{caveat}</li>
+          ))}
+        </ul>
+      </div>
+      <div className="card-bottom">
+        <Link className="text-button" href={`/universities/${program.id}`}>
+          View program details
+        </Link>
+        <SaveOption admission={admission} programId={program.id} />
+        <External href={program.title.sourceUrl}>Program source</External>
+        <small>Program checked {program.title.verifiedAt}</small>
+        <button
+          className={`button ${selected ? 'primary' : 'secondary'} compare-toggle`}
+          aria-pressed={selected}
+          aria-label={`${selected ? 'Remove' : 'Compare'} ${university.shortName} ${program.title.value}`}
+          onClick={() => admission.toggleCompare(program.id)}
+        >
+          {selected ? <Check size={16} /> : <Plus size={16} />}
+          {selected ? 'Added to comparison' : 'Add to comparison'}
         </button>
       </div>
-      <div className="location">
-        <MapPin size={13} />
-        {u.city}, {u.country}
-      </div>
-      <h3>
-        <button onClick={details}>{u.name}</button>
-      </h3>
-      <p className="program-name">
-        {programName(u.fields.includes(profile.interest) ? profile.interest : u.fields[0])}
-      </p>
-      <div className="match">
-        <span className="match-dots" aria-hidden="true">
-          {Array.from({ length: 5 }, (_, i) => (
-            <i key={i} className={i < item.matches ? 'filled' : ''} />
-          ))}
-        </span>
-        {item.matches} из 5 критериев
-      </div>
-      <div className="program-facts">
-        <div>
-          <span>Обучение в год</span>
-          <strong>{money(u.fee)}</strong>
-        </div>
-        <div>
-          <span>Английский</span>
-          <strong>IELTS {u.ielts.toFixed(1)}</strong>
-        </div>
-      </div>
-      <div className="program-reason">
-        <Check size={14} />
-        <span>{item.reasons[0] ?? 'Вариант для сравнения'}</span>
-      </div>
-      <button className="card-link" onClick={details}>
-        Почему подходит
-        <ArrowUpRight size={16} />
-      </button>
     </article>
   )
 }

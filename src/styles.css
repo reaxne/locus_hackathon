@@ -1,20 +1,2 @@
-/* Ordered imports preserve the existing cascade. Edit the corresponding stylesheet. */
-@import './styles/base.css';
-@import './styles/layout.css';
-@import './styles/common.css';
-@import './styles/overview-hero.css';
-@import './styles/program-card.css';
-@import './styles/overview-panels.css';
-@import './styles/footer.css';
-@import './styles/profile.css';
-@import './styles/programs.css';
-@import './styles/compare.css';
-@import './styles/roadmap.css';
-@import './styles/dialogs.css';
-@import './styles/feedback.css';
-@import './styles/typography.css';
-@import './styles/responsive/desktop.css';
-@import './styles/responsive/tablet.css';
-@import './styles/responsive/mobile.css';
-@import './styles/responsive/small-mobile.css';
-@import './styles/accessibility.css';
+@import './styles/app.css';
+@import './styles/planning.css';

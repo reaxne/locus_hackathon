@@ -1,44 +1,47 @@
 import { useEffect, useState } from 'react'
+import { programs } from '../data/universities'
+import { recommend } from '../lib/matching'
+import { createPlan } from '../lib/roadmap'
 import {
-  recommend,
-  createRoadmap,
+  applyProfile,
+  demoProfile,
+  initialState,
+  legacyStorageKey,
   parseSavedState,
+  reconcile,
   storageKey,
-  universities,
-  type Profile,
-  type View,
-  type University,
-} from '../model'
-import { navigation } from '../navigation'
-
-const getView = (): View => navigation.find((n) => `#${n.id}` === window.location.hash)?.id ?? 'overview'
+  validateProfile,
+  validActivity,
+} from '../lib/persistence'
+import { questionIds } from '../lib/profile'
+import type { ApplicantProfile, Theme, ListLabel, PlannedActivity } from '../types'
 
 export function useAdmission() {
-  const [state, setState] = useState(() => {
+  const [loaded] = useState(() => {
     try {
-      return parseSavedState(localStorage.getItem(storageKey))
+      return {
+        ...parseSavedState(localStorage.getItem(storageKey) ?? localStorage.getItem(legacyStorageKey)),
+        unavailable: false,
+      }
     } catch {
-      return parseSavedState(null)
+      return { state: initialState(), recovered: false, unavailable: true }
     }
   })
-  const [view, setView] = useState<View>(getView)
-  const [profileOpen, setProfileOpen] = useState(false)
-  const [details, setDetails] = useState<University | null>(null)
-  const [helpOpen, setHelpOpen] = useState(false)
-  const [mobileOpen, setMobileOpen] = useState(false)
-  const [toast, setToast] = useState('')
-  const [storageError, setStorageError] = useState(false)
-  const [query, setQuery] = useState('')
-  const [countryFilter, setCountryFilter] = useState('Все страны')
-  const { profile, completed, comparison, isDemo } = state
-  const recommendations = recommend(profile)
-  const target = universities.find((u) => u.id === state.target) ?? recommendations[0].university
-  const tasks = createRoadmap(profile, target)
-  const completedCount = tasks.filter((t) => completed.includes(t.id)).length
-  const progress = Math.round((completedCount / tasks.length) * 100)
-  const nextTask = tasks.find((t) => !completed.includes(t.id))
-  const journeyStage = completedCount === tasks.length ? 4 : state.target ? 2 : 1
-  const title = navigation.find((n) => n.id === view)!.label
+  const [state, setState] = useState(loaded.state)
+  const [storageError, setStorageError] = useState(loaded.unavailable)
+  const [notice, setNotice] = useState(
+    loaded.recovered
+      ? 'Saved data could not be read in full. Valid progress was retained where possible; please review your profile.'
+      : '',
+  )
+  useEffect(() => {
+    if (!notice) return
+    const timer = window.setTimeout(() => setNotice(''), 6000)
+    return () => window.clearTimeout(timer)
+  }, [notice])
+  const [systemDark, setSystemDark] = useState(
+    () => window.matchMedia('(prefers-color-scheme: dark)').matches,
+  )
   useEffect(() => {
     try {
       localStorage.setItem(storageKey, JSON.stringify(state))
@@ -48,84 +51,164 @@ export function useAdmission() {
     }
   }, [state])
   useEffect(() => {
-    const change = () => setView(getView())
-    window.addEventListener('hashchange', change)
-    return () => window.removeEventListener('hashchange', change)
+    const query = window.matchMedia('(prefers-color-scheme: dark)')
+    const change = () => setSystemDark(query.matches)
+    query.addEventListener('change', change)
+    return () => query.removeEventListener('change', change)
   }, [])
+  const dark = state.theme === 'dark' || (state.theme === 'system' && systemDark)
   useEffect(() => {
-    if (!toast) return
-    const timer = setTimeout(() => setToast(''), 4000)
-    return () => clearTimeout(timer)
-  }, [toast])
-  function navigate(next: View) {
-    window.location.hash = next
-    setView(next)
-    setMobileOpen(false)
-    window.scrollTo({ top: 0, behavior: 'instant' })
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+  }, [dark])
+  const recommendations = state.profile ? recommend(state.profile) : []
+  const focus = programs.find((p) => p.id === state.focus)
+  const tasks = state.profile
+    ? createPlan(state.profile, state.savedOptions, state.activities, state.focus)
+    : []
+  function saveProfile(profile: ApplicantProfile, isDemo = false) {
+    if (!validateProfile(profile)) return
+    setState((old) =>
+      reconcile({
+        ...old,
+        profile,
+        draft: profile,
+        draftStep: 0,
+        isDemo,
+        answeredQuestions: [...questionIds],
+      }),
+    )
+    setNotice('Your answers, recommendations and plan are up to date.')
+  }
+  function updateProfile(patch: Partial<ApplicantProfile>) {
+    setState((old) => (old.profile ? applyProfile(old, { ...old.profile, ...patch }) : old))
   }
   function toggleCompare(id: string) {
-    if (!comparison.includes(id) && comparison.length >= 3) {
-      setToast('Можно сравнить до трёх программ. Убери одну, чтобы добавить другую.')
+    if (!state.comparison.includes(id) && state.comparison.length >= 3) {
+      setNotice('You can compare up to three programs. Remove one to add another.')
       return
     }
-    setState((s) => ({
-      ...s,
-      comparison: s.comparison.includes(id) ? s.comparison.filter((v) => v !== id) : [...s.comparison, id],
-    }))
+    setState((old) =>
+      reconcile({
+        ...old,
+        comparison: old.comparison.includes(id)
+          ? old.comparison.filter((p) => p !== id)
+          : [...old.comparison, id],
+      }),
+    )
+  }
+  function chooseFocus(id: string) {
+    if (!programs.some((program) => program.id === id)) return
+    setState((old) =>
+      reconcile({
+        ...old,
+        focus: id,
+        savedOptions: old.savedOptions.some((option) => option.programId === id)
+          ? old.savedOptions
+          : [...old.savedOptions, { programId: id, label: 'Considering' }],
+      }),
+    )
+    setNotice('Your focus is saved. The plan includes your saved programs, goals and activities.')
   }
   function toggleTask(id: string) {
-    setState((s) => ({
-      ...s,
-      completed: s.completed.includes(id) ? s.completed.filter((t) => t !== id) : [...s.completed, id],
-    }))
+    setState((old) =>
+      reconcile({
+        ...old,
+        completed: old.completed.includes(id)
+          ? old.completed.filter((v) => v !== id)
+          : [...old.completed, id],
+      }),
+    )
   }
-  function saveProfile(p: Profile) {
-    setState((s) => ({ ...s, profile: p, isDemo: false, completed: [], target: null }))
-    setProfileOpen(false)
-    navigate('profile')
-    setToast('Профиль сохранён. Подбор и маршрут обновлены.')
+  function saveOption(programId: string, label: ListLabel) {
+    if (!programs.some((program) => program.id === programId)) return
+    setState((old) =>
+      reconcile({
+        ...old,
+        savedOptions: [
+          ...old.savedOptions.filter((option) => option.programId !== programId),
+          { programId, label },
+        ],
+      }),
+    )
   }
-  function chooseTarget(u: University) {
-    setState((s) => ({ ...s, target: u.id }))
-    setDetails(null)
-    navigate('roadmap')
-    setToast(`Маршрут построен для ${u.name}`)
+  function removeOption(programId: string) {
+    setState((old) =>
+      reconcile({
+        ...old,
+        savedOptions: old.savedOptions.filter((option) => option.programId !== programId),
+        focus: old.focus === programId ? null : old.focus,
+      }),
+    )
+  }
+  function answerQuestion(patch: Partial<ApplicantProfile>, id: string, nextStep: number) {
+    setState((old) => {
+      const draft = { ...old.draft, ...patch }
+      if (!validateProfile(draft)) return old
+      const next = {
+        ...old,
+        draft,
+        draftStep: Math.min(nextStep, questionIds.length - 1),
+        answeredQuestions: [...new Set([...old.answeredQuestions, id])],
+      }
+      return nextStep >= questionIds.length || old.profile
+        ? reconcile({ ...next, profile: draft, isDemo: false })
+        : next
+    })
+  }
+  function addActivity(activity: Omit<PlannedActivity, 'id'>) {
+    const entry = { ...activity, id: crypto.randomUUID() }
+    if (!validActivity(entry)) return
+    setState((old) =>
+      old.activities.length >= 100 ||
+      (entry.templateId && old.activities.some((item) => item.templateId === entry.templateId))
+        ? old
+        : reconcile({ ...old, activities: [...old.activities, entry] }),
+    )
+  }
+  function updateActivity(id: string, patch: Partial<Omit<PlannedActivity, 'id'>>) {
+    setState((old) =>
+      reconcile({
+        ...old,
+        activities: old.activities.map((activity) => {
+          const updated = { ...activity, ...patch }
+          return activity.id === id && validActivity(updated) ? updated : activity
+        }),
+      }),
+    )
   }
   return {
-    view,
-    profileOpen,
-    setProfileOpen,
-    details,
-    setDetails,
-    helpOpen,
-    setHelpOpen,
-    mobileOpen,
-    setMobileOpen,
-    toast,
-    setToast,
+    state,
     storageError,
-    query,
-    setQuery,
-    countryFilter,
-    setCountryFilter,
-    profile,
-    completed,
-    comparison,
-    isDemo,
+    notice,
+    setNotice,
+    dark,
     recommendations,
-    target,
+    focus,
     tasks,
-    completedCount,
-    progress,
-    nextTask,
-    journeyStage,
-    title,
-    navigate,
-    toggleCompare,
-    toggleTask,
     saveProfile,
-    chooseTarget,
+    updateProfile,
+    toggleCompare,
+    chooseFocus,
+    toggleTask,
+    saveOption,
+    removeOption,
+    answerQuestion,
+    addActivity,
+    updateActivity,
+    removeActivity: (id: string) =>
+      setState((old) =>
+        reconcile({ ...old, activities: old.activities.filter((activity) => activity.id !== id) }),
+      ),
+    signIn: (displayName: string) =>
+      setState((old) => ({
+        ...old,
+        demoSession: { displayName: displayName.trim().slice(0, 40) || 'Student' },
+      })),
+    signOut: () => setState((old) => ({ ...old, demoSession: null })),
+    setTheme: (theme: Theme) => setState((old) => ({ ...old, theme })),
+    setDraft: (draft: ApplicantProfile) => setState((old) => ({ ...old, draft })),
+    setDraftStep: (draftStep: number) => setState((old) => ({ ...old, draftStep })),
+    loadDemo: () => saveProfile(demoProfile(), true),
   }
 }
-
-export type AdmissionController = ReturnType<typeof useAdmission>
+export type Admission = ReturnType<typeof useAdmission>

@@ -1,15 +1,14 @@
 import { ArrowRight, Check } from 'lucide-react'
 import { useState } from 'react'
 import type { Admission } from '../hooks/useAdmission'
-import { programs, universityFor } from '../data/universities'
 import { listLabels } from '../types'
-import { meetsHardConstraints } from '../lib/matching'
 import { Link, useRouter } from '../lib/router'
 import { Empty, Notice, PageHeading } from '../components/Shared'
 import SaveOption from '../components/SaveOption'
 import { ru } from '../lib/labels'
 
 export default function UniversityListPage({ admission }: { admission: Admission }) {
+  const { programs, universityFor } = admission
   const [filter, setFilter] = useState('All labels')
   const { go } = useRouter()
   const p = admission.state.profile
@@ -20,7 +19,9 @@ export default function UniversityListPage({ admission }: { admission: Admission
       </Empty>
     )
   const visible = admission.state.savedOptions.filter(
-    (option) => filter === 'All labels' || option.label === filter,
+    (option) =>
+      programs.some((program) => program.id === option.programId) &&
+      (filter === 'All labels' || option.label === filter),
   )
   return (
     <>
@@ -37,7 +38,7 @@ export default function UniversityListPage({ admission }: { admission: Admission
       </PageHeading>
       <Notice>
         «Мечта», «Цель» и «Запасной вариант» — личные метки, а не вероятность поступления. Для каждого
-        варианта нужно проверить требования и финансирование.
+        варианта нужно проверить требования и финансирование. Список доступен только в текущем сеансе.
       </Notice>
       <label className="list-filter">
         Фильтр по метке
@@ -73,7 +74,7 @@ export default function UniversityListPage({ admission }: { admission: Admission
           {visible.map((option) => {
             const program = programs.find((item) => item.id === option.programId)!
             const uni = universityFor(program)
-            const allowed = meetsHardConstraints(p, program)
+            const allowed = admission.recommendations.some((match) => match.program.id === program.id)
             return (
               <article className="panel saved-program" key={option.programId}>
                 <div className="card-top">

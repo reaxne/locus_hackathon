@@ -1,3 +1,4 @@
+import type { RecommendationResponse } from './recommendations'
 import type { ApplicantProfile } from '../types'
 import { emptyProfile, validateProfile } from './persistence'
 import { questionIds } from './profile'
@@ -57,7 +58,10 @@ export async function request<T>(path: string, method = 'GET', body?: unknown, u
     }
     throw new ApiError(
       response.status,
-      messages[response.status] ?? 'Не удалось сохранить данные на сервере. Повторите попытку.',
+      messages[response.status] ??
+        (method === 'GET'
+          ? 'Не удалось загрузить данные с сервера. Повторите попытку.'
+          : 'Не удалось сохранить данные на сервере. Повторите попытку.'),
     )
   }
   if (response.status === 204) return undefined as T
@@ -144,6 +148,13 @@ function decode(data: SurveyEnvelope, userId: string): RemoteProfile {
   }
 }
 export const api = {
+  recommendations: async (userId: string) => {
+    const response = await request<RecommendationResponse>('/recommendations?limit=50')
+    // Cookies are shared across tabs. Do not render another account's results.
+    if ((await me()).id !== userId)
+      throw new ApiError(409, 'Аккаунт изменился. Загрузите профиль заново перед просмотром рекомендаций.')
+    return response
+  },
   me,
   login,
   register: async (username: string, password: string) => {

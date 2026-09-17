@@ -1,77 +1,69 @@
 # Locus frontend
 
-React + TypeScript + Vite admission planner. The backend is the existing **LocusBackend** checkout, located in this environment at `C:/Users/Amir/PycharmProjects/LocusBackend`. There is no separate `backend/` implementation in this frontend repository.
+React + TypeScript + Vite frontend for the existing LocusBackend project (`C:/Python/LocusBackend` in this workspace). Backend source and configuration are not modified by this frontend integration.
 
-## Run both applications
+## Run
 
-In LocusBackend, create a working Python 3.12+ virtual environment and install `requirements-dev.txt`. Copy `.env.example` to `.env`, configure a dedicated PostgreSQL `DATABASE_URL`, then run:
-
-```powershell
-python -m uvicorn main:app --env-file .env --host 127.0.0.1 --port 8000
-```
-
-In this frontend repository:
+Start LocusBackend using its own README, with PostgreSQL and its Python dependencies configured. For local HTTP, the backend needs `COOKIE_SECURE=false` and the exact frontend origin in `ALLOWED_ORIGINS`.
 
 ```powershell
 npm ci
 npm run dev
 ```
 
-Open http://127.0.0.1:5173. Use the same hostname consistently. Vite forwards `/api/auth/*` and `/api/survey` to LocusBackend's `/auth/*` and `/survey`, removing the frontend-only `/api` prefix. `API_UPSTREAM` can override http://127.0.0.1:8000. The production Node static server uses the same proxy; build with `npm run build`, then `npm start`.
+Open http://127.0.0.1:5173. Vite proxies every `/api/*` request to `http://127.0.0.1:8000/*`. Set `API_UPSTREAM` to use another backend address. Use the same hostname consistently so session cookies work.
 
-For Docker, set `LOCUS_BACKEND_PATH` to the existing LocusBackend folder and `POSTGRES_PASSWORD` to a long URL-safe password, then run `docker compose up --build`. This local HTTP setup serves http://127.0.0.1:3000. Docker was not available for verification here. Production requires HTTPS, `COOKIE_SECURE=true`, an exact allowed frontend Origin in LocusBackend and a reachable PostgreSQL service. Static-only hosting also needs an `/api` reverse proxy.
+Production: `npm run build`, then `npm start`. The Node server serves the build and forwards `/api/*` to the same configurable upstream. It contains no authentication, recommendation engine or data storage. Static-only hosting requires an equivalent reverse proxy. HTTPS deployments need secure cookies and an allowed origin configured in the backend.
 
-## Authentication and walkthrough
+## API integration
 
-1. Choose **Создать аккаунт**. Enter a username (3–50 Latin letters, digits or underscores) and password (8–128 characters). These are LocusBackend's existing rules; login does not use email.
-2. The frontend calls `POST /auth/register`, then `POST /auth/login`, then `GET /auth/me`. Registration opens the questionnaire at question one.
-3. Answer one question at a time. Valid edits, answered question IDs and the current step autosave through `POST /survey`. Wait for **Ответы сохранены в аккаунте** before closing the tab.
-4. Refresh or sign out and back in to resume the saved draft. Each authenticated user has separate PostgreSQL records.
-5. Complete or skip all questions to submit the profile and open recommendations.
-6. Edit any answer in **Профиль**. These edits use the same `POST /survey` route and immediately update matching/roadmap calculations. Exam goals, language, academic performance and constraints are saved with the profile too.
-7. Save failures remain visible and keep edits in memory for retry. Stale revisions or a changed account in another tab require explicitly loading the server version. Normal logout waits for successful saves; explicit **Выйти без сохранения последних изменений** discards unsaved changes when needed.
+| Frontend request                    | Existing backend endpoint   | Purpose                                                                                     |
+| ----------------------------------- | --------------------------- | ------------------------------------------------------------------------------------------- |
+| POST `/api/auth/register`           | `/auth/register`            | Register with username and password                                                         |
+| POST `/api/auth/login`              | `/auth/login`               | Set the HttpOnly session cookie                                                             |
+| GET `/api/auth/me`                  | `/auth/me`                  | Restore and verify account identity                                                         |
+| POST `/api/auth/logout`             | `/auth/logout`              | Revoke the session                                                                          |
+| GET `/api/survey`                   | `/survey`                   | Restore the questionnaire and profile                                                       |
+| POST `/api/survey`                  | `/survey`                   | Save draft, questionnaire progress and profile using revisions                              |
+| GET `/api/recommendations?limit=50` | `/recommendations?limit=50` | Load ranked programs, explanations, budget decisions, requirements, roadmap and next action |
 
-LocusBackend still returns Bearer tokens for existing API clients. Browser login additionally sets an HttpOnly, SameSite cookie; the frontend uses `credentials: 'include'` and stores no tokens or profiles in localStorage. Cookie mutations use `X-Locus-Request: 1` and an allowed Origin. The browser never receives database credentials. Email verification, password reset and Google OAuth are not implemented.
+`src/lib/api.ts` sends cookies and the backend's browser security headers. Survey writes retain the existing fifteen-field `survey` payload plus the full `state` supported by LocusBackend. There are no credentials, tokens or profile snapshots in localStorage.
 
-The current backend scope is authentication, questionnaire and profile. University lists, activity entries, task completion and theme remain session-memory features. Optional JSON profile downloads are explicit exports, not API storage. Historical localStorage migration helpers remain pure validation utilities and are not used for live persistence.
+`src/lib/profileSync.ts` serializes/coalesces questionnaire saves and handles revision conflicts. `src/hooks/useAdmission.ts` waits for the latest survey to be successfully saved before requesting recommendations. Failed saves block refresh; save retry also refreshes recommendations. Profile/account changes invalidate displayed results, and late responses are ignored. Recommendation failures have a retry action and never fall back to local recommendations. Account identity is checked again before displaying results.
 
-## Existing API contract and field mapping
+`src/lib/recommendations.ts` adapts the backend's camelCase response to the existing UI components. Server order, reasons, warnings, financial decisions, the best admission route, tasks, completion and next action are retained. Task IDs are namespaced by program to prevent collisions. Selecting programs filters the returned tasks; it does not generate new tasks or recalculate eligibility.
 
-| Frontend request          | LocusBackend route    | Behavior                                                  |
-| ------------------------- | --------------------- | --------------------------------------------------------- |
-| POST `/api/auth/register` | POST `/auth/register` | `{username,password}` → `{id,username}`                   |
-| POST `/api/auth/login`    | POST `/auth/login`    | Existing token response plus browser session cookie       |
-| GET `/api/auth/me`        | GET `/auth/me`        | Current user                                              |
-| POST `/api/auth/logout`   | POST `/auth/logout`   | Revoke session                                            |
-| GET `/api/survey`         | GET `/survey`         | Restore questionnaire/profile; 404 means no saved answers |
-| POST `/api/survey`        | POST `/survey`        | Autosave draft, submit or edit profile                    |
+Removed: local matching/ranking, local roadmap generation, personalized portfolio generation, the hardcoded university catalog, and unused localStorage migration logic. The frontend retains form validation, formatting, search/filter controls, comparison selection and other UI state. CSS and the visual layout are unchanged.
 
-`src/lib/api.ts` maps `ApplicantProfile` to the existing `{survey: {...}}` payload: SAT/IELTS/NUET/UNT/AET become top-level scores or null, funding becomes the backend's funding list, and “Any city” becomes an empty city list. An optional `state` object retains the full typed profile, draft, step, answered IDs and server revision. It preserves exam statuses, exam goals and other fields absent from the original fifteen-question contract. `X-Locus-User` guards against a shared cookie changing accounts in another tab; it never selects data ownership.
+## Limits of the existing backend
 
-Backend validation checks both representations agree, validates frontend fields, and commits the survey/state in one transaction. Every write increments its revision. Legacy API clients can still send/read the fifteen-field payload without `state`. Supported legacy answers are restored; incompatible legacy values produce an error instead of being silently overwritten. The existing recommendation endpoints remain available in LocusBackend; frontend recommendation calculations are unchanged by this integration.
+- `/recommendations` returns at most 50 matching programs. There is no public catalog or program-detail endpoint. Program pages and source records display only the returned recommendations.
+- The response omits city, degree metadata, language, duration, program code, full document checklists and complete program descriptions. Missing facts remain unknown; the frontend does not fill them from an old local catalog. Source dates are taken from the response.
+- Excluded programs are not fabricated into full program cards. Previously selected programs absent from the latest response are not displayed as current matches.
+- Saved university labels, activities, task status overrides and theme remain in memory for the current session. No endpoint exists to persist them. The UI describes this limitation. Refresh/logout clears them.
+- Exam goals, section scores, study language, academic performance and free-text constraints are saved in the profile state. The existing recommendation endpoint does not use all these fields; this frontend does not add its own scoring rules for them.
+- Portfolio suggestions come only from the server's `portfolio_activity` tasks. The API has no activity category field; these are displayed in the UI's general personal-project category. Manually entered activities are session UI state.
+- Server task completion is authoritative. Manual session marks do not update server task dependencies or its next-action decision; if its next action is marked complete locally, no substitute is calculated in the frontend.
+- Server text is displayed as supplied (the current backend often returns English explanations).
 
-`src/lib/profileSync.ts` serializes/coalesces autosaves. `useAdmission.ts` restores authenticated state and connects changes to existing UI logic. Legacy `demoAccount`/`demoSession` field names are internal compatibility names: they now hold a real backend identity. Their historical `email` field contains the username; no email authentication is implied.
+These gaps require backend API changes for full feature parity. They are intentionally not implemented in the frontend or by modifying LocusBackend.
 
-## PostgreSQL and old SQLite data
-
-LocusBackend now stores users, sessions, surveys and program records in PostgreSQL. API storage has no SQLite, JSON-file or in-memory fallback. `DATABASE_URL` is required. The backend startup applies its versioned SQL schema; see LocusBackend's README for setup and extension details. `migrate_sqlite.py` can import previous SQLite records into an empty PostgreSQL database without modifying the source. Review that procedure before switching an existing deployment. Database credentials must be configured locally; test runs do not configure or alter your existing PostgreSQL service.
-
-## Verification
+## Checks
 
 ```powershell
 npm run typecheck
 npm test
 npm run build
-# Run with a Python environment containing LocusBackend's requirements-dev.txt:
-python scripts/test_locus_backend.py --backend C:/path/to/LocusBackend --browser
+# Isolated desktop/mobile UI tests with mocked API responses:
+npx playwright test tests/backend-ui.spec.ts
 ```
 
-The integration runner starts a separate temporary PostgreSQL cluster on loopback port 54329, runs the existing backend test suite plus integration checks, then optionally tests Chrome desktop/mobile against Python on 8001 and the frontend proxy on 3100. Set `PG_BIN` to the installed PostgreSQL binary directory (Windows default: PostgreSQL 18). It stops its processes afterward. Ignored test database files are retained under `tmp/` for diagnostics. Trust authentication is only for this disposable loopback test cluster. Never point tests at production.
+Unit tests cover API payloads, account changes, save serialization/retry and recommendation response adaptation. Browser tests cover server-only program/task rendering, profile-save ordering, late responses, error retry and empty results. Fixtures contain fictional data and are outside the application bundle.
 
-Tests cover existing Bearer auth/survey/recommendation compatibility, PostgreSQL persistence, browser cookies, drafts, submission, profile edits, account isolation, validation, stale revisions, retries and account switches. Frontend unit tests cover API mapping and serialized saving alongside the existing domain tests.
+With an independently configured backend Python runtime and PostgreSQL binaries, the existing real-server integration runner is also available:
 
-## University sources
+```powershell
+python scripts/test_locus_backend.py --backend C:/Python/LocusBackend --browser
+```
 
-The existing repository catalog contains five programs at three Astana universities. This integration does not change or reverify their facts. Sources: [Nazarbayev University](https://apply.nu.edu.kz/), [AITU](https://astanait.edu.kz/bachelor), [ENU](https://fit.enu.kz/en/page/departments/department-of-computer-and-software-engineering/educational-programs). Unknown requirements, costs and deadlines remain unknown; historical facts keep their recorded cycle/category. Portfolio suggestions are ideas rather than verified admitted-student projects.
-
-To update the frontend catalog, verify the exact program/year/category on the official site, edit `src/data/universities.ts` while preserving IDs, record source/date/scope, and rerun tests/build. Student profile edits never change shared catalog data. The backend catalog importer writes program records to PostgreSQL; optional JSON import fixtures are source inputs, not API persistence.
+The real-server suite needs `requirements-dev.txt` from LocusBackend and PostgreSQL (`PG_BIN`). It uses a separate disposable test cluster; never point it at production. For this change, production build, unit tests and mocked browser tests were run. Real PostgreSQL integration could not be run in the provided environment because `psycopg` and PostgreSQL binaries were unavailable.

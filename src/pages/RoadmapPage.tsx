@@ -1,12 +1,12 @@
 import { ArrowRight, Check, Flag, CircleCheck, CalendarDays } from 'lucide-react'
 import type { Admission } from '../hooks/useAdmission'
-import { programs, universityFor } from '../data/universities'
 import { Empty, PageHeading } from '../components/Shared'
 import TaskDetails from '../components/TaskDetails'
 import { Link } from '../lib/router'
 import { ru } from '../lib/labels'
 
 export default function RoadmapPage({ admission }: { admission: Admission }) {
+  const { programs, universityFor } = admission
   const { state, tasks } = admission
   if (!state.profile)
     return (
@@ -15,10 +15,10 @@ export default function RoadmapPage({ admission }: { admission: Admission }) {
       </Empty>
     )
   const profile = state.profile
-  const completed = tasks.filter((task) => state.completed.includes(task.id)).length
-  const next =
-    tasks.find((task) => state.inProgress.includes(task.id) && !state.completed.includes(task.id)) ??
-    tasks.find((task) => !state.completed.includes(task.id))
+  const completed = tasks.filter(
+    (task) => state.completed.includes(task.id) || admission.serverCompleted.includes(task.id),
+  ).length
+  const next = admission.nextTask
   const saved = programs.filter((program) =>
     state.savedOptions.some((option) => option.programId === program.id),
   )
@@ -96,11 +96,14 @@ export default function RoadmapPage({ admission }: { admission: Admission }) {
       <section className="route-next" aria-labelledby="next-action-title">
         <span className="next-icon">{next ? <Flag size={24} /> : <CircleCheck size={24} />}</span>
         <div>
-          <span className="small-label">{next ? 'ОДНО ДЕЙСТВИЕ СЕЙЧАС' : 'ТЕКУЩИЙ ПЛАН ВЫПОЛНЕН'}</span>
-          <h2 id="next-action-title">{next?.title ?? 'Ты прошёл все шаги.'}</h2>
+          <span className="small-label">{next ? 'ОДНО ДЕЙСТВИЕ СЕЙЧАС' : 'ТЕКУЩИЙ ПЛАН'}</span>
+          <h2 id="next-action-title">
+            {next?.title ?? (tasks.length ? 'Нет следующего действия.' : 'Маршрут пока не сформирован.')}
+          </h2>
           <p>
             {next?.description ??
-              'Возвращайся к официальным источникам ближе к поступлению: требования могут измениться.'}
+              (admission.recommendationWarnings.join(' ') ||
+                'Возвращайся к официальным источникам ближе к поступлению: требования могут измениться.')}
           </p>
           {next && <span className="task-timing">{next.timing}</span>}
         </div>
@@ -123,11 +126,12 @@ export default function RoadmapPage({ admission }: { admission: Admission }) {
       </div>
       <ol className="winding-route">
         {tasks.map((task, index) => {
-          const status = state.completed.includes(task.id)
-            ? 'completed'
-            : state.inProgress.includes(task.id)
-              ? 'in-progress'
-              : 'planned'
+          const status =
+            state.completed.includes(task.id) || admission.serverCompleted.includes(task.id)
+              ? 'completed'
+              : state.inProgress.includes(task.id)
+                ? 'in-progress'
+                : 'planned'
           return (
             <li
               className={`route-stop ${status}`}
@@ -154,6 +158,7 @@ export default function RoadmapPage({ admission }: { admission: Admission }) {
                 <p>{task.description}</p>
                 <TaskDetails
                   task={task}
+                  admission={admission}
                   onComplete={
                     status === 'completed' ? undefined : () => admission.setTaskStatus(task.id, 'completed')
                   }
@@ -181,8 +186,8 @@ export default function RoadmapPage({ admission }: { admission: Admission }) {
         })}
       </ol>
       <p className="route-footnote">
-        Маршрут обновляется вместе с профилем, выбранными программами, экзаменами и проектами. Отметка
-        «Готово» сохраняет личный прогресс и не отправляет документы в университет.
+        Маршрут обновляется по сохранённой анкете. Отметки задач доступны только в текущем сеансе. «Готово» не
+        отправляет документы в университет.
       </p>
     </>
   )

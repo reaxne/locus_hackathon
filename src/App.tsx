@@ -63,6 +63,16 @@ export default function App() {
           Ваши ответы и текущий шаг сохранены. Завершите анкету, чтобы увидеть рекомендации.
         </Empty>
       )
+    const needsRecommendations = !['/profile', '/exam-goals'].includes(path)
+    if (needsRecommendations && admission.recommendationsLoading)
+      return <p role="status">Загружаем рекомендации и маршрут…</p>
+    if (needsRecommendations && admission.recommendationError)
+      return (
+        <div className="storage-warning" role="alert">
+          {admission.recommendationError}
+          <button onClick={admission.retryRecommendations}>Повторить загрузку</button>
+        </div>
+      )
     if (path === '/analysis' || path === '/recommendations') return <AnalysisPage admission={admission} />
     if (path === '/profile') return <ProfilePage admission={admission} />
     if (path === '/universities' || path === '/matches') return <MatchesPage admission={admission} />

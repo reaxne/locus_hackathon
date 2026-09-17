@@ -94,7 +94,7 @@ export interface Program {
   title: SourcedFact<string>
   code: string | null
   interests: Interest[]
-  primaryInterest: Interest
+  primaryInterest: Interest | null
   description: string
   duration: SourcedFact<string>
   language: SourcedFact<string>
@@ -147,5 +147,5 @@ export interface SavedState {
   savedOptions: SavedOption[]
   activities: PlannedActivity[]
   demoSession: { displayName: string } | null
-  demoAccount: { email: string; displayName: string; provider: 'email' | 'google' } | null
+  demoAccount: { id: string; email: string; displayName: string; provider: 'email' | 'google' } | null
 }

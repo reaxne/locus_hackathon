@@ -1,10 +1,8 @@
 import { ArrowRight, MapPin } from 'lucide-react'
 import type { Admission } from '../hooks/useAdmission'
-import { programs, universityFor, money } from '../data/universities'
+import { money } from '../data/universities'
 import { Empty, External, Fact, Notice, PageHeading } from '../components/Shared'
 import SaveOption from '../components/SaveOption'
-import { portfolioIdeas } from '../lib/portfolio'
-import { emptyProfile } from '../lib/persistence'
 import { Link } from '../lib/router'
 import { ru } from '../lib/labels'
 import { examLabel } from '../lib/profile'
@@ -16,6 +14,7 @@ export default function ProgramDetailsPage({
   admission: Admission
   programId: string
 }) {
+  const { programs, universityFor } = admission
   const program = programs.find((p) => p.id === programId)
   if (!program)
     return (
@@ -26,9 +25,7 @@ export default function ProgramDetailsPage({
   const uni = universityFor(program)
   const profile = admission.state.profile ?? undefined
   const match = admission.recommendations.find((result) => result.program.id === program.id)
-  const ideas = portfolioIdeas({ ...(profile ?? emptyProfile()), interest: program.primaryInterest }).filter(
-    (idea) => ['Personal Projects', 'Research'].includes(idea.category),
-  )
+  const ideas = match?.ideas ?? []
   return (
     <>
       <PageHeading

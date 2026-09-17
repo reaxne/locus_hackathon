@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { ArrowRight, GitCompareArrows, X } from 'lucide-react'
 import { interests, type ApplicantProfile, type MatchGroup } from '../types'
-import { programs, universities, factApplies } from '../data/universities'
+import { factApplies } from '../data/universities'
 import { ru } from '../lib/labels'
 import type { Admission } from '../hooks/useAdmission'
 import ProgramCard from '../components/ProgramCard'
@@ -10,6 +10,7 @@ import { Link } from '../lib/router'
 import ProfileSummary from '../components/ProfileSummary'
 
 export default function MatchesPage({ admission }: { admission: Admission }) {
+  const { programs, universities } = admission
   const [query, setQuery] = useState('')
   const [universityFilter, setUniversityFilter] = useState('all')
   const [budgetFilter, setBudgetFilter] = useState('all')
@@ -228,7 +229,8 @@ export default function MatchesPage({ admission }: { admission: Admission }) {
           <p>
             {hasFilters
               ? 'Попробуйте изменить университет, запрос или бюджет.'
-              : `В каталоге пока представлены университеты Астаны. Ваше ограничение по городу: ${ru(profile.city)}. Другие города исключены.`}
+              : admission.recommendationWarnings.join(' ') ||
+                'Сервер не вернул подходящих программ для вашей анкеты.'}
           </p>
           <div className="button-row">
             {hasFilters ? (

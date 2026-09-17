@@ -44,6 +44,7 @@ export function External({
   children: ReactNode
   className?: string
 }) {
+  if (!href) return <span className={`external ${className}`}>Источник не указан</span>
   return (
     <a className={`external ${className}`} href={href} target="_blank" rel="noreferrer">
       {children}

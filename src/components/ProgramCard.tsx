@@ -65,7 +65,11 @@ export default function ProgramCard({ match, admission }: { match: Recommendatio
         </Link>
         <SaveOption admission={admission} programId={program.id} />
         <External href={program.title.sourceUrl}>Источник программы</External>
-        <small>Программа проверена {program.title.verifiedAt}</small>
+        <small>
+          {program.title.verifiedAt
+            ? `Программа проверена ${program.title.verifiedAt}`
+            : 'Дата проверки не указана'}
+        </small>
         <button
           className={`button ${selected ? 'primary' : 'secondary'} compare-toggle`}
           aria-pressed={selected}

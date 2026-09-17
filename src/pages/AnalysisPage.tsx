@@ -1,7 +1,6 @@
 import { ArrowRight, CheckCircle, Search } from 'lucide-react'
 import type { Admission } from '../hooks/useAdmission'
 import { ru } from '../lib/labels'
-import { factApplies } from '../data/universities'
 import { Link } from '../lib/router'
 import ProgramCard from '../components/ProgramCard'
 import { PageHeading, Notice } from '../components/Shared'
@@ -11,32 +10,12 @@ export default function AnalysisPage({ admission }: { admission: Admission }) {
   const matches = admission.recommendations
   const selected = new Set(admission.state.savedOptions.map((item) => item.programId))
   const relevant = matches.filter((match) => selected.has(match.program.id))
-  const verifiedGaps = relevant.flatMap(({ program, university }) =>
-    factApplies(program.examRequirements, p)
-      ? program.examRequirements.value!.flatMap((requirement) => {
-          const result = p.exams[requirement.exam]
-          return result.status !== 'completed' ||
-            result.score === null ||
-            (requirement.minimum !== null && result.score < requirement.minimum)
-            ? [
-                `${university.shortName}: проверьте результат ${ru(requirement.exam)} по подтверждённому требованию программы.`,
-              ]
-            : []
-        })
-      : [],
-  )
-  const gaps = [...verifiedGaps]
-  if (!selected.size) gaps.push('Выберите программы, чтобы проверить требования именно к вашей цели.')
-  if (p.budget === null) gaps.push('Определите бюджет на обучение и отдельно на проживание.')
-  if (p.academicPerformance === 'needs-support')
-    gaps.push('Выберите один сложный предмет и запланируйте два занятия по конкретной теме.')
-  if (p.studyLanguage !== 'any')
-    gaps.push('Сверьте желаемый язык обучения с языком каждой выбранной программы.')
-  if (relevant.some(({ program }) => !factApplies(program.examRequirements, p)))
-    gaps.push(
-      'У выбранных программ не подтверждены требования для вашего года: уточните их в приёмной комиссии.',
-    )
-  if (!gaps.length) gaps.push('Проверьте актуальные требования, документы и сроки выбранных программ.')
+  const gaps = [
+    ...new Set([
+      ...admission.recommendationWarnings,
+      ...(relevant.length ? relevant : matches).flatMap((match) => match.caveats),
+    ]),
+  ]
   return (
     <>
       <PageHeading
@@ -116,7 +95,7 @@ export default function AnalysisPage({ admission }: { admission: Admission }) {
       ) : (
         <section className="panel empty">
           <h2>В подборке нет программ с такими ограничениями</h2>
-          <p>Каталог пока охватывает Астану. Мы не будем подменять выбранный вами город.</p>
+          <p>Сервер не вернул подходящих программ для вашей анкеты.</p>
           <Link className="button secondary" href="/profile">
             Изменить условия
           </Link>

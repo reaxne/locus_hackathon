@@ -97,7 +97,13 @@ test('complete questionnaire submits and profile edits persist', async ({ page }
   expect(remote.state.profile.studyLanguage).toBe('ru')
   expect(remote.state.profile.constraints).toBe('Need accommodation')
   await page.goto('/universities')
-  await expect(page.locator('.program-card').first()).toHaveAttribute('data-program', 'enu-cs')
+  const recommendations = await (await page.request.get('/api/recommendations?limit=50')).json()
+  await expect(page.locator('.program-card')).toHaveCount(recommendations.recommendations.length)
+  if (recommendations.recommendations.length)
+    await expect(page.locator('.program-card').first()).toHaveAttribute(
+      'data-program',
+      recommendations.recommendations[0].programId,
+    )
 })
 
 test('failed save is visible and retry persists the edit', async ({ page }) => {

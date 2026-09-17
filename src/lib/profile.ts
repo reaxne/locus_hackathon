@@ -60,15 +60,3 @@ export function validGoal(exam: ExamName, value: unknown): value is ExamGoal {
   const goal = value as ExamGoal
   return validScore(exam, goal.targetScore) && validDate(goal.targetDate)
 }
-export function exportProfile(profile: ApplicantProfile) {
-  const blob = new Blob(
-    [JSON.stringify({ schemaVersion: 3, exportedAt: new Date().toISOString(), profile }, null, 2)],
-    { type: 'application/json' },
-  )
-  const url = URL.createObjectURL(blob)
-  const link = document.createElement('a')
-  link.href = url
-  link.download = 'admission-profile.json'
-  link.click()
-  window.setTimeout(() => URL.revokeObjectURL(url), 1000)
-}

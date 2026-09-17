@@ -1,5 +1,5 @@
 import type { RoadmapTask } from '../types'
-import { programs, universityFor } from '../data/universities'
+import type { Admission } from '../hooks/useAdmission'
 import { External } from './Shared'
 import { Link } from '../lib/router'
 import { ru } from '../lib/labels'
@@ -13,7 +13,16 @@ export function TaskSource({ task }: { task: RoadmapTask }) {
     <External href={task.sourceUrl}>{task.sourceLabel}</External>
   )
 }
-export default function TaskDetails({ task, onComplete }: { task: RoadmapTask; onComplete?: () => void }) {
+export default function TaskDetails({
+  task,
+  onComplete,
+  admission,
+}: {
+  task: RoadmapTask
+  onComplete?: () => void
+  admission: Admission
+}) {
+  const { programs, universityFor } = admission
   const associated = programs.filter((program) => task.programIds.includes(program.id))
   const nearest = task.deadlines
     .filter(

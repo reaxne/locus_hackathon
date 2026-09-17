@@ -1,8 +1,8 @@
-import { ArrowRight, Download } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import type { Admission } from '../hooks/useAdmission'
 import { Empty, Notice, PageHeading } from '../components/Shared'
 import ProfileSummary from '../components/ProfileSummary'
-import { exportProfile, examLabel } from '../lib/profile'
+import { examLabel } from '../lib/profile'
 import { goalExamNames } from '../types'
 import { Link } from '../lib/router'
 
@@ -21,12 +21,7 @@ export default function ProfilePage({ admission }: { admission: Admission }) {
         title="Мой профиль"
         description="Измените любой ответ — рекомендации и маршрут обновятся."
         back="/roadmap"
-      >
-        <button className="button secondary" onClick={() => exportProfile(p)}>
-          <Download size={16} />
-          Скачать профиль в JSON
-        </button>
-      </PageHeading>
+      />
       {admission.state.isDemo && <Notice>Это пример анкеты. Измените ответы под свои планы.</Notice>}
       <section className="panel summary-panel">
         <div className="section-intro">

@@ -1,12 +1,13 @@
 import { ArrowRight, MapPin, X } from 'lucide-react'
 import type { Admission } from '../hooks/useAdmission'
-import { programs, universityFor, money } from '../data/universities'
+import { money } from '../data/universities'
 import { External, Empty, Fact, Notice, PageHeading } from '../components/Shared'
 import { Link, useRouter } from '../lib/router'
 import { ru } from '../lib/labels'
 import { examLabel } from '../lib/profile'
 
 export default function ComparePage({ admission }: { admission: Admission }) {
+  const { programs, universityFor } = admission
   const { go } = useRouter()
   const profile = admission.state.profile
   const selected = programs.filter((program) => admission.state.comparison.includes(program.id))

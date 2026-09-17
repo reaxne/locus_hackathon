@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Plus, Check, Trash2, ArrowRight } from 'lucide-react'
 import type { Admission } from '../hooks/useAdmission'
 import { activityCategories, type ActivityCategory, type PlannedActivity } from '../types'
-import { portfolioIdeas, categoryOutcomes } from '../lib/portfolio'
+import { categoryOutcomes } from '../lib/portfolio'
 import { Empty, Notice, PageHeading } from '../components/Shared'
 import { Link } from '../lib/router'
 import { ru } from '../lib/labels'
@@ -20,7 +20,7 @@ export default function PortfolioPage({ admission }: { admission: Admission }) {
         Ваш класс и интересы помогают подобрать посильные проекты и занятия.
       </Empty>
     )
-  const ideas = portfolioIdeas(p).filter((idea) => filter === 'All categories' || idea.category === filter)
+  const ideas = admission.ideas.filter((idea) => filter === 'All categories' || idea.category === filter)
   const full = admission.state.activities.length >= 100
   return (
     <>
@@ -37,7 +37,8 @@ export default function PortfolioPage({ admission }: { admission: Admission }) {
       </PageHeading>
       <Notice>
         Это идеи для портфолио, а не подтверждённые проекты поступивших студентов или гарантия преимуществ.
-        Проверьте условия участия и даты каждого мероприятия.
+        Проверьте условия участия и даты каждого мероприятия. Добавленные занятия доступны только в текущем
+        сеансе.
       </Notice>
       <section className="panel portfolio-preferences">
         <h2>Что вы хотите попробовать?</h2>

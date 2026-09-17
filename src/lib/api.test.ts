@@ -5,6 +5,20 @@ afterEach(() => vi.unstubAllGlobals())
 const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status })
 
 describe('LocusBackend transport', () => {
+  it('loads server recommendations with cookies and rejects an account changed in another tab', async () => {
+    const response = { recommendations: [], warnings: [] }
+    const fetch = vi
+      .fn()
+      .mockResolvedValueOnce(json(response))
+      .mockResolvedValueOnce(json({ id: 1, username: 'alice' }))
+      .mockResolvedValueOnce(json(response))
+      .mockResolvedValueOnce(json({ id: 2, username: 'bob' }))
+    vi.stubGlobal('fetch', fetch)
+    expect(await api.recommendations('1')).toEqual(response)
+    expect(fetch.mock.calls[0][0]).toBe('/api/recommendations?limit=50')
+    expect(fetch.mock.calls[0][1]).toMatchObject({ method: 'GET', credentials: 'include' })
+    await expect(api.recommendations('1')).rejects.toMatchObject({ status: 409 })
+  })
   it('registers then logs in through existing username routes', async () => {
     const fetch = vi
       .fn()

@@ -1,15 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
-import { programs } from '../data/universities'
-import { recommend } from '../lib/matching'
-import { createPlan } from '../lib/roadmap'
-import {
-  applyProfile,
-  demoProfile,
-  initialState,
-  reconcile,
-  validateProfile,
-  validActivity,
-} from '../lib/persistence'
+import { adaptRecommendations, type ServerMatch } from '../lib/recommendations'
+import { applyProfile, initialState, reconcile, validateProfile, validActivity } from '../lib/persistence'
 import { questionIds } from '../lib/profile'
 import { api, ApiError, type Identity, type RemoteProfile } from '../lib/api'
 import { ProfileSync, type SaveStatus } from '../lib/profileSync'
@@ -122,11 +113,71 @@ export function useAdmission() {
   useEffect(() => {
     document.documentElement.dataset.theme = dark ? 'dark' : 'light'
   }, [dark])
-  const recommendations = state.profile ? recommend(state.profile) : []
+  const [remoteMatches, setRemoteMatches] = useState<{ key: string; matches: ServerMatch[] } | null>(null)
+  const [recommendationError, setRecommendationError] = useState('')
+  const [recommendationWarnings, setRecommendationWarnings] = useState<string[]>([])
+  const [recommendationAttempt, setRecommendationAttempt] = useState(0)
+  const recommendationKey = JSON.stringify([state.demoAccount, state.profile])
+  useEffect(() => {
+    let cancelled = false
+    setRemoteMatches(null)
+    setRecommendationError('')
+    setRecommendationWarnings([])
+    if (!state.demoAccount || !state.profile) return
+    // Session marks cannot establish completion for a changed server plan.
+    setState((old) => ({ ...old, completed: [], inProgress: [] }))
+    void (async () => {
+      try {
+        // The autosave effect above schedules this profile before we flush it.
+        // GET recommendations must only see a successfully committed survey.
+        await sync.current?.flush()
+        if (cancelled) return
+        const response = await api.recommendations(state.demoAccount!.id)
+        const matches = adaptRecommendations(response)
+        if (cancelled) return
+        setRemoteMatches({ key: recommendationKey, matches })
+        setRecommendationWarnings(response.warnings)
+        const allowed = new Set(matches.map((match) => match.program.id))
+        setState((old) => ({
+          ...old,
+          comparison: old.comparison.filter((id) => allowed.has(id)),
+          focus: old.focus && allowed.has(old.focus) ? old.focus : null,
+        }))
+      } catch (error) {
+        if (!cancelled)
+          setRecommendationError(
+            error instanceof Error ? error.message : 'Не удалось загрузить рекомендации.',
+          )
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [recommendationKey, recommendationAttempt])
+  const recommendations = remoteMatches?.key === recommendationKey ? remoteMatches.matches : []
+  const recommendationsLoading =
+    !!state.profile && !!state.demoAccount && remoteMatches?.key !== recommendationKey && !recommendationError
+  const programs = recommendations.map((match) => match.program)
+  const universities = [
+    ...new Map(recommendations.map((match) => [match.university.id, match.university])).values(),
+  ]
+  const universityFor = (program: (typeof programs)[number]) =>
+    universities.find((uni) => uni.id === program.universityId)!
   const focus = programs.find((p) => p.id === state.focus)
-  const tasks = state.profile
-    ? createPlan(state.profile, state.savedOptions, state.activities, state.focus)
-    : []
+  const selectedMatches = recommendations.filter(
+    (match) =>
+      state.focus === match.program.id ||
+      state.savedOptions.some((option) => option.programId === match.program.id),
+  )
+  const planMatches = selectedMatches.length ? selectedMatches : recommendations
+  const tasks = planMatches.flatMap((match) => match.tasks)
+  const serverCompleted = planMatches.flatMap((match) => match.completed)
+  const nextTask = planMatches
+    .map((match) =>
+      tasks.find((task) => task.id === match.nextActionId && !state.completed.includes(task.id)),
+    )
+    .find(Boolean)
+  const ideas = recommendations.flatMap((match) => match.ideas)
   function saveProfile(profile: ApplicantProfile, isDemo = false) {
     if (!validateProfile(profile)) return
     setState((old) =>
@@ -139,7 +190,7 @@ export function useAdmission() {
         answeredQuestions: [...questionIds],
       }),
     )
-    setNotice('Профиль, рекомендации и маршрут обновлены.')
+    setNotice('Сохраняем профиль и загружаем рекомендации.')
   }
   function updateProfile(patch: Partial<ApplicantProfile>) {
     setState((old) => (old.profile ? applyProfile(old, { ...old.profile, ...patch }) : old))
@@ -169,7 +220,7 @@ export function useAdmission() {
           : [...old.savedOptions, { programId: id, label: 'Priority' }],
       }),
     )
-    setNotice('Приоритетная программа сохранена. Маршрут обновлён.')
+    setNotice('Приоритетная программа выбрана на текущий сеанс.')
   }
   function toggleTask(id: string) {
     setTaskStatus(id, state.completed.includes(id) ? 'planned' : 'completed')
@@ -265,11 +316,15 @@ export function useAdmission() {
     saveError,
     conflict,
     retrySave: () => {
-      void sync.current?.retry().catch(() => {})
+      void sync.current
+        ?.retry()
+        .then(() => setRecommendationAttempt((attempt) => attempt + 1))
+        .catch(() => {})
     },
     reloadProfile: async () => {
       try {
         restore(await api.me(), await api.profile())
+        setRecommendationAttempt((attempt) => attempt + 1)
       } catch (error) {
         setNotice((error as Error).message)
       }
@@ -278,6 +333,16 @@ export function useAdmission() {
     setNotice,
     dark,
     recommendations,
+    recommendationsLoading,
+    recommendationError,
+    recommendationWarnings,
+    retryRecommendations: () => setRecommendationAttempt((attempt) => attempt + 1),
+    programs,
+    universities,
+    universityFor,
+    ideas,
+    nextTask,
+    serverCompleted,
     focus,
     tasks,
     saveProfile,
@@ -300,7 +365,6 @@ export function useAdmission() {
     setTheme: (theme: Theme) => setState((old) => ({ ...old, theme })),
     setDraft: (draft: ApplicantProfile) => setState((old) => ({ ...old, draft })),
     setDraftStep: (draftStep: number) => setState((old) => ({ ...old, draftStep })),
-    loadDemo: () => saveProfile(demoProfile(), true),
   }
 }
 export type Admission = ReturnType<typeof useAdmission>

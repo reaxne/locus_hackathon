@@ -21,7 +21,7 @@ export function PageHeading({
     <div className="page-heading">
       {back && (
         <Link className="back-link" href={back}>
-          <ArrowLeft size={15} /> Back
+          <ArrowLeft size={15} /> Назад
         </Link>
       )}
       <div className="eyebrow">{eyebrow}</div>
@@ -48,7 +48,7 @@ export function External({
     <a className={`external ${className}`} href={href} target="_blank" rel="noreferrer">
       {children}
       <ExternalLink size={13} aria-hidden="true" />
-      <span className="sr-only"> (opens in a new tab)</span>
+      <span className="sr-only"> (откроется в новой вкладке)</span>
     </a>
   )
 }
@@ -68,22 +68,22 @@ export function Fact<T>({
         {applicable
           ? format(fact.value!)
           : fact.status === 'demo' && fact.value !== null
-            ? `${format(fact.value)} · Illustrative only`
-            : 'Check official site'}
+            ? `${format(fact.value)} · Пример`
+            : 'Уточните на официальном сайте'}
       </span>
       <small>
         {applicable
-          ? `Verified${fact.admissionCycle ? ` · ${fact.admissionCycle}` : ''}`
-          : 'Unknown for your intake'}
-        {fact.verifiedAt && ` · Checked ${fact.verifiedAt}`}
+          ? `Подтверждено${fact.admissionCycle ? ` · ${fact.admissionCycle}` : ''}`
+          : 'Не подтверждено для вашего года поступления'}
+        {fact.verifiedAt && ` · Проверено ${fact.verifiedAt}`}
       </small>
       {!applicable && fact.status === 'verified' && fact.admissionCycle && (
         <small>
-          Historical reference only: {format(fact.value!)} · {fact.admissionCycle}. Not a confirmed price or
-          rule for your intake/category.
+          Данные прошлых лет: {format(fact.value!)} · {fact.admissionCycle}. Не подтверждают цену или правила
+          для вашего года и категории поступления.
         </small>
       )}
-      <External href={fact.sourceUrl}>Official source</External>
+      <External href={fact.sourceUrl}>Официальный источник</External>
     </div>
   )
 }
@@ -99,7 +99,7 @@ export function Empty({
   title,
   children,
   href = '/diagnosis',
-  action = 'Build my profile',
+  action = 'Заполнить анкету',
 }: {
   title: string
   children: ReactNode

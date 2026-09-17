@@ -1,0 +1,33 @@
+services:
+  db:
+    image: postgres:18
+    environment:
+      POSTGRES_DB: locus
+      POSTGRES_USER: locus
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in your environment}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U locus -d locus']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+  backend:
+    build: ${LOCUS_BACKEND_PATH:?Set LOCUS_BACKEND_PATH to your LocusBackend folder}
+    environment:
+      DATABASE_URL: postgresql://locus:${POSTGRES_PASSWORD}@db:5432/locus
+      ALLOWED_ORIGINS: '["http://localhost:3000","http://127.0.0.1:3000"]'
+      COOKIE_SECURE: 'false'
+    depends_on:
+      db:
+        condition: service_healthy
+  frontend:
+    build: .
+    environment:
+      API_UPSTREAM: http://backend:8000
+    ports:
+      - '127.0.0.1:3000:3000'
+    depends_on:
+      - backend
+volumes:
+  postgres_data:

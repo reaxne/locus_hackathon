@@ -16,6 +16,14 @@ const aitu = programs.find((p) => p.id === 'aitu-cs')!
 const nu = programs.find((p) => p.id === 'nu-cs')!
 const profile = (patch: Partial<ApplicantProfile> = {}) => ({ ...demoProfile(), ...patch })
 
+it('recovers a committed profile when the draft is a damaged primitive', () => {
+  const saved = { ...initialState(), profile: demoProfile(), draft: 'broken' }
+  const result = parseSavedState(JSON.stringify(saved))
+  expect(result.recovered).toBe(true)
+  expect(result.state.profile).toEqual(saved.profile)
+  expect(result.state.draft).toEqual(saved.profile)
+})
+
 describe('explainable recommendations', () => {
   it('offers three distinct real universities for the prepared profile', () => {
     expect(new Set(recommend(profile()).map((r) => r.university.id)).size).toBe(3)
@@ -26,7 +34,7 @@ describe('explainable recommendations', () => {
     const cyber = recommend(profile({ interest: 'Cybersecurity' }))
     expect(cyber[0].program.id).toBe('aitu-cyber')
     expect(software[0].program.id).not.toBe(cyber[0].program.id)
-    expect(cyber[0].reasons.join(' ')).toContain('Cybersecurity')
+    expect(cyber[0].reasons.join(' ')).toContain('Кибербезопасность')
   })
   it('changes budget grouping for a verified cycle without treating missing fees as free', () => {
     const low = recommend(profile({ entryYear: 2026, budget: 500_000 }))
@@ -54,7 +62,7 @@ describe('explainable recommendations', () => {
       recommend(after)
         .find((r) => r.program.id === aitu.id)
         ?.reasons.join(' '),
-    ).toContain('AET completed (score unknown)')
+    ).toContain('AET: сдан, балл не указан')
     expect(createRoadmap(before, aitu).map((t) => t.id)).not.toEqual(
       createRoadmap(after, aitu).map((t) => t.id),
     )
@@ -62,22 +70,22 @@ describe('explainable recommendations', () => {
       recommend(after)
         .find((r) => r.program.id === aitu.id)
         ?.caveats.join(' '),
-    ).toContain('thresholds')
+    ).toContain('Пороговые баллы')
   })
 })
 describe('relevant and persistent roadmaps', () => {
   it('starts younger students on exploration and labels application timing as later', () => {
     const tasks = createRoadmap(profile({ grade: 9, entryYear: 2029 }), aitu)
-    expect(tasks[0].title).toBe('Explore your chosen field')
+    expect(tasks[0].title).toBe('Попробуйте выбранное направление')
     expect(tasks.filter((t) => t.stage === 'Now').some((t) => /apply|application/i.test(t.title))).toBe(false)
-    expect(tasks.find((t) => t.title.startsWith('Verify the current deadline'))?.timing).toContain('Later')
-    expect(tasks.find((t) => t.title.startsWith('Prepare to apply to'))?.timing).toContain('2029')
+    expect(tasks.find((t) => t.title.startsWith('Уточните сроки подачи'))?.timing).toContain('2029')
+    expect(tasks.find((t) => t.title.startsWith('Подготовьте заявку'))?.timing).toContain('2029')
   })
   it('uses verification rather than a fabricated deadline for senior students', () => {
     const tasks = createRoadmap(profile({ grade: 12 }), aitu)
-    expect(tasks[0].title).toBe('Check the admissions route at AITU')
-    expect(tasks.find((t) => t.title.startsWith('Verify the current deadline'))?.description).toContain(
-      'No deadline is verified',
+    expect(tasks[0].title).toBe('Проверьте требования выбранных программ: AITU')
+    expect(tasks.find((t) => t.title.startsWith('Уточните сроки подачи'))?.description).toContain(
+      'Не переносите даты прошлых лет',
     )
   })
   it('does not carry completed tasks to a different program', () => {
@@ -111,7 +119,7 @@ describe('relevant and persistent roadmaps', () => {
     const next = reconcile({ ...state, profile: changed })
     expect(next.completed).toContain(tasks[0].id)
     expect(next.completed.some((id) => id.includes(':budget:'))).toBe(false)
-    const oldExamIds = tasks.filter((task) => task.title.includes('UNT')).map((task) => task.id)
+    const oldExamIds = tasks.filter((task) => task.title.includes('ЕНТ')).map((task) => task.id)
     expect(next.completed.some((id) => oldExamIds.includes(id))).toBe(false)
     expect(next.completed.length).toBeLessThan(state.completed.length)
   })
@@ -179,30 +187,30 @@ describe('extended planning and migration', () => {
     const before = createPlan(p)
     expect(before.map((task) => task.title)).toEqual(
       expect.arrayContaining([
-        'Take a diagnostic test for IELTS',
-        'Record your IELTS section scores',
-        'Choose one IELTS section to improve',
-        'Schedule two IELTS practice sessions',
+        'Пройдите пробный тест IELTS',
+        'Добавьте результаты по разделам IELTS',
+        'Выберите один раздел IELTS для улучшения',
+        'Запланируйте два занятия по IELTS',
       ]),
     )
     const changed = { ...p, ieltsSectionScores: { Listening: 7, Reading: 6.5, Writing: 5.5, Speaking: 6 } }
     const after = createPlan(changed)
-    expect(after.find((t) => t.title === 'Choose one IELTS section to improve')?.description).toContain(
-      'Writing',
+    expect(after.find((t) => t.title === 'Выберите один раздел IELTS для улучшения')?.description).toContain(
+      'Письмо',
     )
-    expect(after.find((t) => t.title === 'Take a diagnostic test for IELTS')?.id).toBe(
-      before.find((t) => t.title === 'Take a diagnostic test for IELTS')?.id,
+    expect(after.find((t) => t.title === 'Пройдите пробный тест IELTS')?.id).toBe(
+      before.find((t) => t.title === 'Пройдите пробный тест IELTS')?.id,
     )
-    expect(after.find((t) => t.title === 'Choose one IELTS section to improve')?.id).not.toBe(
-      before.find((t) => t.title === 'Choose one IELTS section to improve')?.id,
+    expect(after.find((t) => t.title === 'Выберите один раздел IELTS для улучшения')?.id).not.toBe(
+      before.find((t) => t.title === 'Выберите один раздел IELTS для улучшения')?.id,
     )
     expect(after.every((t) => t.why && t.how.length && t.sourceUrl && t.timing)).toBe(true)
   })
   it('does not generate SAT preparation just because an option mentions it as a possible route', () => {
     const p = emptyProfile()
     const tasks = createRoadmap(p, nu)
-    expect(tasks.some((t) => t.title === 'Check the SAT route at NU')).toBe(true)
-    expect(tasks.some((t) => t.title === 'Take a diagnostic test for SAT')).toBe(false)
+    expect(tasks.some((t) => t.title === 'Уточните, нужен ли SAT')).toBe(true)
+    expect(tasks.some((t) => t.title === 'Пройдите пробный тест SAT')).toBe(false)
   })
   it('invalidates removed university and activity tasks but retains the other saved program', () => {
     const p = profile()
@@ -238,7 +246,7 @@ describe('extended planning and migration', () => {
       ...initialState(),
       profile: p,
       draft: p,
-      savedOptions: [{ programId: nu.id, label: 'Considering' }],
+      savedOptions: [{ programId: nu.id, label: 'Priority' }],
     })
     expect(state.savedOptions).toHaveLength(1)
     expect(createPlan(p, state.savedOptions).some((task) => task.id.startsWith(`${nu.id}:`))).toBe(false)
@@ -329,5 +337,113 @@ describe('storage and input boundaries', () => {
     expect(recovered.state.profile).toEqual(p)
     expect(recovered.state.completed).toEqual([id])
     expect(recovered.state.draft).toEqual(p)
+  })
+})
+
+describe('Russian journey schema and shared work', () => {
+  it('upgrades old v3 profiles, draft position and personal labels without losing answers', () => {
+    const old = { ...demoProfile() } as Partial<ApplicantProfile>
+    delete old.studyLanguage
+    delete old.academicPerformance
+    delete old.constraints
+    const result = parseSavedState(
+      JSON.stringify({
+        ...initialState(),
+        profile: old,
+        draft: old,
+        draftStep: 3,
+        savedOptions: [{ programId: nu.id, label: 'Considering' }],
+      }),
+    )
+    expect(result.recovered).toBe(false)
+    expect(result.state.profile).toMatchObject({
+      studyLanguage: 'any',
+      academicPerformance: 'unknown',
+      constraints: '',
+      budget: old.budget,
+    })
+    expect(result.state.draftStep).toBe(5)
+    expect(result.state.savedOptions[0].label).toBe('Priority')
+  })
+  it('changes the ordering, explanations and preparation when language changes', () => {
+    const en = profile({ studyLanguage: 'en' }),
+      russian = profile({ studyLanguage: 'ru' })
+    expect(recommend(en)[0].program.id).not.toBe(recommend(russian)[0].program.id)
+    expect(
+      recommend(en)
+        .find((r) => r.program.id === aitu.id)
+        ?.reasons.join(' '),
+    ).toContain('английский')
+    expect(
+      recommend(russian)
+        .find((r) => r.program.id === aitu.id)
+        ?.caveats.join(' '),
+    ).toContain('Русский')
+    expect(createRoadmap(en, aitu).map((t) => t.id)).not.toEqual(
+      createRoadmap(russian, aitu).map((t) => t.id),
+    )
+  })
+  it('shares an exam task and preserves its completion when one associated university is removed', () => {
+    const p = profile(),
+      savedOptions = [
+        { programId: aitu.id, label: 'Priority' as const },
+        { programId: 'enu-cs', label: 'Backup' as const },
+      ]
+    const tasks = createPlan(p, savedOptions)
+    const shared = tasks.find((t) => t.id.includes(':UNT:') && t.id.endsWith(':diagnostic'))!
+    expect(shared.programIds).toEqual(expect.arrayContaining([aitu.id, 'enu-cs']))
+    expect(shared.deadlines).toHaveLength(2)
+    expect(shared.deadlines.every((d) => d.value === null && d.status === 'unknown')).toBe(true)
+    const next = reconcile({
+      ...initialState(),
+      profile: p,
+      draft: p,
+      savedOptions: savedOptions.slice(1),
+      completed: [shared.id],
+      inProgress: [shared.id, 'fabricated'],
+    })
+    expect(next.completed).toContain(shared.id)
+    expect(next.inProgress).toEqual([])
+    expect(createPlan(p, next.savedOptions).find((t) => t.id === shared.id)?.programIds).toEqual(['enu-cs'])
+  })
+  it('shares university-level checks between programs without duplicate IDs', () => {
+    const p = profile(),
+      choices = [
+        { programId: 'aitu-cs', label: 'Priority' as const },
+        { programId: 'aitu-se', label: 'Dream' as const },
+      ]
+    const tasks = createPlan(p, choices),
+      shared = tasks.find((t) => t.id.startsWith('university:aitu:') && t.id.endsWith(':route'))!
+    expect(shared.programIds).toHaveLength(2)
+    expect(new Set(tasks.map((t) => t.id)).size).toBe(tasks.length)
+    expect(createPlan(p, choices.slice(1)).some((t) => t.id === shared.id)).toBe(true)
+    expect(tasks.every((t) => t.completionCriteria && t.why && t.how.length)).toBe(true)
+  })
+  it('does not describe an unplanned unverified exam as a missing requirement', () => {
+    const p = emptyProfile()
+    p.exams.SAT.status = 'not-planned'
+    const caveats = recommend(p)
+      .find((r) => r.program.id === nu.id)!
+      .caveats.join(' ')
+    expect(caveats).not.toContain('SAT')
+    expect(createRoadmap(p, nu).some((t) => t.title === 'Пройдите пробный тест SAT')).toBe(false)
+  })
+  it('saves demo identity and in-progress status while validating added answers', () => {
+    const p = profile(),
+      task = createRoadmap(p, nu)[0]
+    const state = {
+      ...initialState(),
+      profile: p,
+      draft: p,
+      focus: nu.id,
+      inProgress: [task.id],
+      demoAccount: { email: 'student@example.com', displayName: 'Ученик', provider: 'email' as const },
+    }
+    expect(parseSavedState(JSON.stringify(state)).state).toMatchObject({
+      inProgress: [task.id],
+      demoAccount: state.demoAccount,
+    })
+    expect(validateProfile({ ...p, studyLanguage: 'de' })).toBe(false)
+    expect(validateProfile({ ...p, constraints: 'x'.repeat(1001) })).toBe(false)
   })
 })

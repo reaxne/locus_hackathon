@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { ArrowUpRight, Check, ChevronRight, Moon, Sun, X, BookOpen, Database, Laptop } from 'lucide-react'
+import { BookOpen, Moon, Sun, X, Check } from 'lucide-react'
 import { useAdmission } from './hooks/useAdmission'
 import { Link, useRouter } from './lib/router'
 import { Empty } from './components/Shared'
@@ -10,226 +10,189 @@ import MatchesPage from './pages/MatchesPage'
 import ComparePage from './pages/ComparePage'
 import RoadmapPage from './pages/RoadmapPage'
 import SourcesPage from './pages/SourcesPage'
-import DashboardPage from './pages/DashboardPage'
 import SignInPage from './pages/SignInPage'
 import ProgramDetailsPage from './pages/ProgramDetailsPage'
 import UniversityListPage from './pages/UniversityListPage'
 import PortfolioPage from './pages/PortfolioPage'
 import ExamGoalsPage from './pages/ExamGoalsPage'
+import AnalysisPage from './pages/AnalysisPage'
 
 const titles: Record<string, string> = {
-  '/': 'Undergraduate admission planning',
-  '/profile': 'Your profile',
-  '/diagnosis': 'Your progressive diagnosis',
-  '/matches': 'Your matches',
-  '/compare': 'Compare programs',
-  '/roadmap': 'Your roadmap',
-  '/sources': 'Sources & data',
-  '/universities': 'Universities',
-  '/sign-in': 'Demo sign-in',
-  '/dashboard': 'Dashboard',
-  '/my-list': 'My University List',
-  '/portfolio': 'Portfolio Plan',
-  '/exam-goals': 'Exam Goals',
+  '/': 'План поступления',
+  '/register': 'Создать аккаунт',
+  '/sign-in': 'Войти',
+  '/diagnosis': 'Анкета',
+  '/analysis': 'Диагностика профиля',
+  '/recommendations': 'Рекомендации',
+  '/profile': 'Мой профиль',
+  '/universities': 'Найти университет',
+  '/matches': 'Найти университет',
+  '/my-list': 'Мои университеты',
+  '/compare': 'Сравнение программ',
+  '/roadmap': 'Мой маршрут',
+  '/dashboard': 'Мой маршрут',
+  '/exam-goals': 'Экзамены',
+  '/portfolio': 'План портфолио',
+  '/sources': 'Источники и данные',
 }
 export default function App() {
   const admission = useAdmission()
-  const { path } = useRouter()
   const { state } = admission
+  const { path, go } = useRouter()
+  const publicPage = ['/', '/register', '/sign-in', '/sources'].includes(path)
+  const authenticated = !!state.demoSession && !!state.demoAccount
   useEffect(() => {
-    document.title = `${titles[path] ?? (path.startsWith('/universities/') ? 'Program details' : 'Page not found')} · Kazakhstan`
+    document.title = `${titles[path] ?? (path.startsWith('/universities/') ? 'Программа обучения' : 'Страница не найдена')} · Казахстан`
   }, [path])
-  const steps = [
-    {
-      path: state.profile ? '/profile' : '/diagnosis',
-      label: 'Diagnosis',
-      detail: 'Your starting point',
-      complete: !!state.profile,
-      active: ['/profile', '/diagnosis'].includes(path),
-    },
-    {
-      path: '/universities',
-      label: 'Universities',
-      detail: 'Explore your options',
-      complete: state.comparison.length >= 2,
-      active: path === '/matches' || path.startsWith('/universities'),
-    },
-    {
-      path: '/compare',
-      label: 'Compare',
-      detail: 'Find your focus',
-      complete: !!state.focus,
-      active: path === '/compare',
-    },
-    {
-      path: '/roadmap',
-      label: 'Plan',
-      detail: 'Take the next step',
-      complete: admission.tasks.length > 0 && admission.tasks.every((t) => state.completed.includes(t.id)),
-      active: path === '/roadmap',
-    },
-  ]
+  const content = () => {
+    if (admission.loading) return <p role="status">Загружаем аккаунт…</p>
+    if (path === '/') return <HomePage admission={admission} />
+    if (path === '/sources') return <SourcesPage admission={admission} />
+    if (path === '/register' || path === '/sign-in')
+      return <SignInPage key={path} register={path === '/register'} admission={admission} />
+    if (!publicPage && !authenticated)
+      return (
+        <Empty title="Продолжите после входа" href="/sign-in" action="Войти">
+          Создайте аккаунт или войдите, чтобы открыть анкету и личный маршрут.
+        </Empty>
+      )
+    if (path === '/diagnosis') return <DiagnosisPage admission={admission} />
+    if (!state.profile)
+      return (
+        <Empty title="Закончим знакомство?" href="/diagnosis" action="Продолжить анкету">
+          Ваши ответы и текущий шаг сохранены. Завершите анкету, чтобы увидеть рекомендации.
+        </Empty>
+      )
+    if (path === '/analysis' || path === '/recommendations') return <AnalysisPage admission={admission} />
+    if (path === '/profile') return <ProfilePage admission={admission} />
+    if (path === '/universities' || path === '/matches') return <MatchesPage admission={admission} />
+    if (path.startsWith('/universities/'))
+      return <ProgramDetailsPage admission={admission} programId={path.slice('/universities/'.length)} />
+    if (path === '/my-list') return <UniversityListPage admission={admission} />
+    if (path === '/compare') return <ComparePage admission={admission} />
+    if (path === '/roadmap' || path === '/dashboard') return <RoadmapPage admission={admission} />
+    if (path === '/exam-goals') return <ExamGoalsPage admission={admission} />
+    if (path === '/portfolio') return <PortfolioPage admission={admission} />
+    return (
+      <Empty title="Страница не найдена" href="/roadmap" action="Мой маршрут">
+        Сохранённые данные доступны в вашем профиле.
+      </Empty>
+    )
+  }
   return (
     <div className="app-shell">
-      <a className="skip-link" href="#main">
-        Skip to content
+      <a href="#main" className="skip-link">
+        Перейти к содержимому
       </a>
       <header className="site-header">
         <div className="header-inner">
-          <Link className="home-link" href="/" aria-label="Admission planning home">
-            <BookOpen size={24} />
+          <Link className="home-link" href="/" aria-label="На главную">
+            <BookOpen size={26} />
             <span>
-              Undergraduate
+              Поступление
               <br />
-              <strong>admission planning</strong>
+              <strong>в Казахстане</strong>
             </span>
           </Link>
           <div className="header-actions">
-            <Link href="/sources" className="source-nav">
-              <Database size={15} />
-              Sources & data
+            <Link className="source-nav" href="/sources">
+              Источники
             </Link>
-            <div className="theme-control">
-              <button
-                className="icon-button"
-                aria-label={`Switch to ${admission.dark ? 'light' : 'dark'} theme`}
-                onClick={() => admission.setTheme(admission.dark ? 'light' : 'dark')}
-              >
-                {admission.dark ? <Sun size={19} /> : <Moon size={19} />}
-              </button>
-              {state.theme !== 'system' && (
-                <button
-                  className="icon-button system-theme"
-                  aria-label="Use system theme"
-                  title="Use system theme"
-                  onClick={() => admission.setTheme('system')}
-                >
-                  <Laptop size={16} />
-                </button>
-              )}
-            </div>
-            <span className="header-location">
-              KAZAKHSTAN <ArrowUpRight size={13} />
-            </span>
-            {state.demoSession && (
-              <Link className="header-dashboard" href="/dashboard">
-                My dashboard
+            <button
+              className="icon-button"
+              aria-label={admission.dark ? 'Включить светлую тему' : 'Включить тёмную тему'}
+              onClick={() => admission.setTheme(admission.dark ? 'light' : 'dark')}
+            >
+              {admission.dark ? <Sun size={20} /> : <Moon size={20} />}
+            </button>
+            {authenticated ? (
+              <Link href={state.profile ? '/roadmap' : '/diagnosis'}>
+                {state.profile ? 'Мой маршрут' : 'Продолжить анкету'}
               </Link>
+            ) : (
+              <Link href="/sign-in">Войти</Link>
             )}
           </div>
         </div>
       </header>
-      <nav className="journey-nav" aria-label="Admission journey">
-        <ol>
-          {steps.map((step, i) => (
-            <li
-              key={step.path}
-              className={`${step.active ? 'active' : ''} ${step.complete ? 'complete' : ''}`}
-            >
-              <Link href={step.path} aria-current={step.active ? 'step' : undefined}>
-                <span className="nav-number">
-                  {step.complete && !step.active ? <Check size={16} /> : `0${i + 1}`}
-                </span>
-                <span>
-                  <strong>{step.label}</strong>
-                  <small>{step.detail}</small>
-                </span>
-              </Link>
-              {i < 3 && <ChevronRight className="nav-chevron" size={16} />}
-            </li>
-          ))}
-        </ol>
-      </nav>
-      {state.demoSession && (
-        <nav className="workspace-nav" aria-label="Dashboard navigation">
-          {[
-            ['/dashboard', 'Dashboard'],
-            ['/universities', 'Universities'],
-            ['/my-list', 'My University List'],
-            ['/portfolio', 'Portfolio Plan'],
-            ['/exam-goals', 'Exam Goals'],
-            ['/roadmap', 'Roadmap'],
-            ['/profile', 'Profile'],
-          ].map(([href, label]) => (
+      {authenticated && (
+        <nav className="workspace-nav" aria-label="Личный кабинет">
+          {(state.profile
+            ? [
+                ['/roadmap', 'Мой маршрут'],
+                ['/universities', 'Найти университет'],
+                ['/my-list', 'Мои университеты'],
+                ['/compare', 'Сравнение'],
+                ['/exam-goals', 'Экзамены'],
+                ['/portfolio', 'Портфолио'],
+                ['/profile', 'Профиль'],
+              ]
+            : [['/diagnosis', 'Анкета']]
+          ).map(([href, label]) => (
             <Link key={href} href={href} aria-current={path === href ? 'page' : undefined}>
               {label}
             </Link>
           ))}
           <button
-            onClick={() => {
-              admission.signOut()
-              admission.setNotice('Demo session ended. Your answers and plans remain saved on this device.')
+            onClick={async () => {
+              if (await admission.signOut()) {
+                go('/')
+                admission.setNotice('Вы вышли. Анкета и профиль сохранены в аккаунте.')
+              }
             }}
           >
-            End demo session
+            Выйти
           </button>
         </nav>
       )}
       <main id="main" className="main-content" tabIndex={-1}>
-        {admission.storageError && (
+        {authenticated && (
+          <p role="status">
+            {admission.saveStatus === 'saving'
+              ? 'Сохраняем ответы…'
+              : admission.saveStatus === 'saved'
+                ? 'Ответы сохранены в аккаунте'
+                : 'Есть несохранённые изменения'}
+          </p>
+        )}
+        {admission.saveError && (
           <div className="storage-warning" role="alert">
-            Browser storage is unavailable. You can continue in this session, but changes will not survive a
-            reload.
+            {admission.saveError}
+            <button
+              onClick={async () => {
+                if (await admission.signOut(true)) go('/sign-in')
+              }}
+            >
+              Выйти без сохранения последних изменений
+            </button>
+            {admission.conflict ? (
+              <button onClick={() => void admission.reloadProfile()}>
+                Загрузить серверную версию (заменит несохранённые ответы)
+              </button>
+            ) : (
+              <button onClick={admission.retrySave}>Повторить сохранение</button>
+            )}
           </div>
         )}
-        {path === '/' ? (
-          <HomePage admission={admission} />
-        ) : path === '/profile' ? (
-          <ProfilePage admission={admission} />
-        ) : path === '/diagnosis' ? (
-          <DiagnosisPage admission={admission} />
-        ) : path === '/matches' || path === '/universities' ? (
-          <MatchesPage admission={admission} />
-        ) : path.startsWith('/universities/') ? (
-          <ProgramDetailsPage admission={admission} programId={path.slice('/universities/'.length)} />
-        ) : path === '/sign-in' ? (
-          <SignInPage admission={admission} />
-        ) : path === '/dashboard' ? (
-          <DashboardPage admission={admission} />
-        ) : path === '/my-list' ? (
-          <UniversityListPage admission={admission} />
-        ) : path === '/portfolio' ? (
-          <PortfolioPage admission={admission} />
-        ) : path === '/exam-goals' ? (
-          <ExamGoalsPage admission={admission} />
-        ) : path === '/compare' ? (
-          <ComparePage admission={admission} />
-        ) : path === '/roadmap' ? (
-          <RoadmapPage admission={admission} />
-        ) : path === '/sources' ? (
-          <SourcesPage admission={admission} />
-        ) : (
-          <Empty title="This page could not be found" href="/" action="Back to home">
-            Your saved progress is still available from the journey navigation.
-          </Empty>
-        )}
+        {content()}
       </main>
       <footer className="site-footer">
         <div>
-          <span>IT bachelor's pathways · Kazakhstan</span>
-          <span>Grades 9–12 · No account required</span>
+          <span>Поступление в Казахстане · 9–12 классы</span>
+          <span>Анкета и профиль сохраняются в аккаунте</span>
         </div>
-        <div>
-          <span>
-            <span className="status-dot" />
-            {admission.storageError ? 'Session only' : 'Saved on this device'}
-          </span>
-          <Link href="/sources">
-            Data & methodology
-            <ArrowUpRight size={13} />
-          </Link>
-        </div>
+        <Link href="/sources">Источники и методика</Link>
       </footer>
       {admission.notice && (
         <div className="toast" role="status">
-          <Check size={17} />
+          <Check size={18} />
           <span>{admission.notice}</span>
           <button
             className="icon-button"
-            aria-label="Dismiss notification"
+            aria-label="Закрыть уведомление"
             onClick={() => admission.setNotice('')}
           >
-            <X size={16} />
+            <X size={18} />
           </button>
         </div>
       )}

@@ -1,25 +1,24 @@
 import type { GoalExamName } from '../types'
-
-// Preparation resources, not evidence that a program requires an exam.
+// Preparation resources do not establish admission requirements.
 export const examResources: Record<GoalExamName, { url: string; label: string; guidance: string }> = {
   SAT: {
     url: 'https://satsuite.collegeboard.org/practice',
-    label: 'College Board preparation resources',
-    guidance: 'Use an official practice test and review your score report.',
+    label: 'Официальная подготовка College Board',
+    guidance: 'Пройдите официальный пробный тест и разберите отчёт о результатах.',
   },
   IELTS: {
     url: 'https://ielts.org/take-a-test/preparation-resources',
-    label: 'IELTS official preparation resources',
-    guidance: 'Review sample tasks for listening, reading, writing and speaking.',
+    label: 'Официальные материалы IELTS',
+    guidance: 'Изучите примеры заданий по аудированию, чтению, письму и устной речи.',
   },
   NUET: {
     url: 'https://apply.nu.edu.kz/',
-    label: 'NU official admissions information',
-    guidance: 'Confirm the current NUET route, format and available preparation materials with NU.',
+    label: 'Приёмная комиссия Назарбаев Университета',
+    guidance: 'Уточните актуальный формат NUET и доступные материалы для подготовки.',
   },
   UNT: {
     url: 'https://testcenter.kz/en/',
-    label: 'National Testing Center',
-    guidance: 'Confirm the current UNT format, subject combination and registration process.',
+    label: 'Национальный центр тестирования',
+    guidance: 'Уточните формат ЕНТ, комбинацию предметов и порядок регистрации.',
   },
 }

@@ -3,6 +3,7 @@ import {
   useContext,
   useEffect,
   useState,
+  useRef,
   type AnchorHTMLAttributes,
   type ReactNode,
 } from 'react'
@@ -10,12 +11,15 @@ import {
 const RouterContext = createContext({ path: '/', go: (_path: string) => {} })
 export function Router({ children }: { children: ReactNode }) {
   const [path, setPath] = useState(window.location.pathname.replace(/\/$/, '') || '/')
+  const previousPath = useRef(path)
   useEffect(() => {
     const onBack = () => setPath(window.location.pathname.replace(/\/$/, '') || '/')
     window.addEventListener('popstate', onBack)
     return () => window.removeEventListener('popstate', onBack)
   }, [])
   useEffect(() => {
+    if (previousPath.current === path) return
+    previousPath.current = path
     window.scrollTo(0, 0)
     document.getElementById('main')?.focus({ preventScroll: true })
   }, [path])

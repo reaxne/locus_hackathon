@@ -1,155 +1,189 @@
-import { Check, ArrowRight, CircleCheck, Flag } from 'lucide-react'
+import { ArrowRight, Check, Flag, CircleCheck, CalendarDays } from 'lucide-react'
 import type { Admission } from '../hooks/useAdmission'
-import { universityFor } from '../data/universities'
-import { Empty, Notice, PageHeading } from '../components/Shared'
-import TaskDetails, { TaskSource } from '../components/TaskDetails'
+import { programs, universityFor } from '../data/universities'
+import { Empty, PageHeading } from '../components/Shared'
+import TaskDetails from '../components/TaskDetails'
 import { Link } from '../lib/router'
+import { ru } from '../lib/labels'
 
 export default function RoadmapPage({ admission }: { admission: Admission }) {
-  const { focus, state, tasks } = admission
+  const { state, tasks } = admission
   if (!state.profile)
     return (
-      <Empty title="Start your personal plan">
-        Build a profile, compare your options, then choose a focus program.
+      <Empty title="Твой маршрут начинается с профиля">
+        Расскажи о своих интересах и планах, чтобы увидеть первые шаги.
       </Empty>
     )
+  const profile = state.profile
   const completed = tasks.filter((task) => state.completed.includes(task.id)).length
-  const next = tasks.find((task) => !state.completed.includes(task.id))
+  const next =
+    tasks.find((task) => state.inProgress.includes(task.id) && !state.completed.includes(task.id)) ??
+    tasks.find((task) => !state.completed.includes(task.id))
+  const saved = programs.filter((program) =>
+    state.savedOptions.some((option) => option.programId === program.id),
+  )
+  const deadline = tasks
+    .flatMap((task) => task.deadlines)
+    .filter(
+      (item) =>
+        item.status === 'verified' &&
+        item.value &&
+        Number.isFinite(Date.parse(item.value)) &&
+        Date.parse(item.value) >= Date.now(),
+    )
+    .sort((a, b) => Date.parse(a.value!) - Date.parse(b.value!))[0]
   return (
     <>
       <PageHeading
-        eyebrow="ONE STEP AT A TIME"
-        title="Your admission roadmap."
-        description={`A preparation plan for grade ${state.profile.grade}, with university entry in ${state.profile.entryYear}.`}
-        back="/dashboard"
+        eyebrow="ТВОЯ ЦЕЛЬ. ТВОЙ ТЕМП."
+        title="Мой маршрут"
+        description="Большая цель становится ближе с каждым небольшим действием."
       >
         <Link className="button secondary" href="/profile">
-          Edit answers
+          Изменить профиль
         </Link>
       </PageHeading>
-      {focus ? (
-        <section className="roadmap-focus panel">
-          <span className={`university-monogram ${focus.universityId}`}>
-            {universityFor(focus).shortName}
-          </span>
-          <div>
-            <span className="small-label">YOUR CURRENT FOCUS</span>
-            <h2>{focus.title.value}</h2>
-            <p>{universityFor(focus).name}</p>
-          </div>
-          <Link className="text-button" href="/my-list">
-            Change focus
-            <ArrowRight size={16} />
-          </Link>
-        </section>
-      ) : (
-        <div className="plan-inputs panel">
-          <strong>Your plan combines your answers, exam goals and portfolio activities.</strong>
+      <section className="route-overview" aria-label="Обзор подготовки">
+        <div className="route-stat">
+          <span className="small-label">ТВОЙ ПРОФИЛЬ</span>
+          <strong>
+            {profile.grade} класс · Поступление {profile.entryYear}
+          </strong>
           <p>
-            {state.savedOptions.length} saved programs · {state.activities.length} activities · Entry in{' '}
-            {state.profile.entryYear}
+            {ru(profile.interest)} · {ru(profile.city)}
           </p>
-          <Link href="/my-list">Manage my university list</Link>
         </div>
-      )}
-      <Notice>
-        {state.profile.grade <= 10
-          ? 'Your first steps focus on exploring and strengthening subjects. Application tasks are for your future intake. '
-          : ''}
-        Timings are suggested preparation milestones, not official deadlines. Checking a task marks your own
-        progress; it does not submit anything. University-specific steps include saved programs that meet your
-        hard constraints. Completed work is retained only while its inputs remain relevant.
-      </Notice>
-      <div className="roadmap-layout">
-        <div className="roadmap-stages">
-          {(['Now', 'Prepare', 'Apply', 'Confirm'] as const).map((stage, i) => (
-            <section key={stage} className="roadmap-stage">
-              <div className="stage-title">
-                <span>{String(i + 1).padStart(2, '0')}</span>
-                <h2>{stage}</h2>
-                <small>
-                  {i === 0
-                    ? 'Start here'
-                    : i === 1
-                      ? 'Build your readiness'
-                      : i === 2
-                        ? 'When your intake opens'
-                        : 'After an official decision'}
-                </small>
-              </div>
-              <div className="stage-tasks">
-                {tasks
-                  .filter((task) => task.stage === stage)
-                  .map((task) => {
-                    const done = state.completed.includes(task.id)
-                    return (
-                      <article className={`task-card ${done ? 'done' : ''}`} key={task.id}>
-                        <label className="task-check">
-                          <input
-                            type="checkbox"
-                            checked={done}
-                            onChange={() => admission.toggleTask(task.id)}
-                          />
-                          <span>
-                            <Check size={15} />
-                          </span>
-                          <span className="sr-only">Complete: {task.title}</span>
-                        </label>
-                        <div>
-                          <span className="task-timing">{task.timing}</span>
-                          <h3>{task.title}</h3>
-                          <p>{task.description}</p>
-                          <TaskDetails task={task} />
-                        </div>
-                      </article>
-                    )
-                  })}
-              </div>
-            </section>
-          ))}
+        <div className="route-stat">
+          <span className="small-label">ПРОГРЕСС</span>
+          <strong>
+            {completed} <span>из {tasks.length} шагов</span>
+          </strong>
+          <progress value={completed} max={tasks.length || 1} aria-label="Прогресс маршрута" />
         </div>
-        <aside className="next-action panel">
-          <span className="next-icon">{next ? <Flag size={22} /> : <CircleCheck size={22} />}</span>
-          <span className="small-label">{next ? 'YOUR NEXT ACTION' : 'CHECKLIST COMPLETE'}</span>
-          <h2>{next?.title ?? 'You have worked through your plan.'}</h2>
+        <div className="route-stat">
+          <span className="small-label">
+            <CalendarDays size={14} /> БЛИЖАЙШИЙ ДЕДЛАЙН
+          </span>
+          {deadline ? (
+            <a href={deadline.sourceUrl} target="_blank" rel="noreferrer">
+              {deadline.value}
+            </a>
+          ) : (
+            <strong className="deadline-unknown">Уточнить на сайте университета</strong>
+          )}
+          <p>Только подтверждённые сроки твоего набора</p>
+        </div>
+      </section>
+      <section className="route-saved">
+        <span className="small-label">ТВОИ ПРОГРАММЫ</span>
+        <div>
+          {saved.length ? (
+            saved.map((program) => (
+              <Link className="route-program-chip" key={program.id} href={`/universities/${program.id}`}>
+                <strong>{universityFor(program).shortName}</strong>
+                {ru(program.title.value ?? 'Программа')}
+                <ArrowRight size={14} />
+              </Link>
+            ))
+          ) : (
+            <p>Сохрани интересующие программы, чтобы добавить их требования в маршрут.</p>
+          )}
+          <Link className="text-button" href="/my-list">
+            Мой список →
+          </Link>
+        </div>
+      </section>
+      <section className="route-next" aria-labelledby="next-action-title">
+        <span className="next-icon">{next ? <Flag size={24} /> : <CircleCheck size={24} />}</span>
+        <div>
+          <span className="small-label">{next ? 'ОДНО ДЕЙСТВИЕ СЕЙЧАС' : 'ТЕКУЩИЙ ПЛАН ВЫПОЛНЕН'}</span>
+          <h2 id="next-action-title">{next?.title ?? 'Ты прошёл все шаги.'}</h2>
           <p>
             {next?.description ??
-              'Revisit official sources when your intake approaches. You can uncheck any task to return to it.'}
+              'Возвращайся к официальным источникам ближе к поступлению: требования могут измениться.'}
           </p>
-          {next && (
-            <>
-              <span className="task-timing">{next.timing}</span>
-              <TaskSource task={next} />
-              {next.actionPath && (
-                <Link className="text-button" href={next.actionPath}>
-                  Open task workspace
-                  <ArrowRight size={15} />
-                </Link>
-              )}
-              <button
-                className="button primary"
-                onClick={() => {
-                  admission.toggleTask(next.id)
-                  admission.setNotice('Task completed. Your next action has been updated.')
-                }}
-              >
-                <Check size={17} />
-                Mark complete
-              </button>
-            </>
-          )}
-          <div className="plan-progress">
-            <div>
-              <strong>
-                {completed} of {tasks.length}
-              </strong>
-              <span>tasks complete</span>
-            </div>
-            <progress value={completed} max={tasks.length} aria-label="Roadmap progress" />
-          </div>
-          <small>Progress is saved in this browser.</small>
-        </aside>
+          {next && <span className="task-timing">{next.timing}</span>}
+        </div>
+        {next && (
+          <a
+            className="button primary"
+            href={`#route-${next.id}`}
+            onClick={() => {
+              const detail = document.getElementById(`route-${next.id}`)?.querySelector('details')
+              if (detail) detail.open = true
+            }}
+          >
+            К действию <ArrowRight size={17} />
+          </a>
+        )}
+      </section>
+      <div className="route-section-heading">
+        <h2>Путь к поступлению</h2>
+        <span>Планы подготовки ≠ официальные дедлайны</span>
       </div>
+      <ol className="winding-route">
+        {tasks.map((task, index) => {
+          const status = state.completed.includes(task.id)
+            ? 'completed'
+            : state.inProgress.includes(task.id)
+              ? 'in-progress'
+              : 'planned'
+          return (
+            <li
+              className={`route-stop ${status}`}
+              id={`route-${task.id}`}
+              key={task.id}
+              style={{ gridRow: Math.floor(index / 3) + 1 }}
+            >
+              <span className="route-node" aria-label={`Шаг ${index + 1}`}>
+                {status === 'completed' ? <Check size={20} /> : String(index + 1).padStart(2, '0')}
+              </span>
+              <article className="route-task">
+                <div className="route-task-top">
+                  <span className="small-label">{ru(task.stage)}</span>
+                  <span className={`route-status ${status}`}>
+                    {status === 'completed'
+                      ? 'Готово'
+                      : status === 'in-progress'
+                        ? 'В работе'
+                        : 'Запланировано'}
+                  </span>
+                </div>
+                <span className="task-timing">{task.timing}</span>
+                <h3>{task.title}</h3>
+                <p>{task.description}</p>
+                <TaskDetails
+                  task={task}
+                  onComplete={
+                    status === 'completed' ? undefined : () => admission.setTaskStatus(task.id, 'completed')
+                  }
+                />
+                <label className="task-status-control">
+                  <span>Статус шага</span>
+                  <select
+                    aria-label={`Статус: ${task.title}`}
+                    value={status}
+                    onChange={(event) =>
+                      admission.setTaskStatus(
+                        task.id,
+                        event.target.value as 'planned' | 'in-progress' | 'completed',
+                      )
+                    }
+                  >
+                    <option value="planned">Запланировано</option>
+                    <option value="in-progress">В работе</option>
+                    <option value="completed">Готово</option>
+                  </select>
+                </label>
+              </article>
+            </li>
+          )
+        })}
+      </ol>
+      <p className="route-footnote">
+        Маршрут обновляется вместе с профилем, выбранными программами, экзаменами и проектами. Отметка
+        «Готово» сохраняет личный прогресс и не отправляет документы в университет.
+      </p>
     </>
   )
 }

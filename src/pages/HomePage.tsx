@@ -1,158 +1,126 @@
-import {
-  ArrowRight,
-  Check,
-  CheckCheck,
-  GitCompareArrows,
-  ListChecks,
-  MapPin,
-  SlidersHorizontal,
-  BookOpen,
-  ShieldCheck,
-} from 'lucide-react'
-import { Link, useRouter } from '../lib/router'
+import { ArrowRight, ArrowUpRight, Check, Fingerprint, ListChecks, Search, ShieldCheck } from 'lucide-react'
+import { Link } from '../lib/router'
 import type { Admission } from '../hooks/useAdmission'
 
-export default function HomePage({ admission }: { admission: Admission }) {
-  const { go } = useRouter()
+export default function HomePage(_props: { admission: Admission }) {
   return (
     <>
-      <section className="home-hero">
-        <div className="hero-copy">
+      <section className="landing-hero">
+        <div className="landing-copy">
           <div className="eyebrow">
-            <span className="status-dot" /> UNDERGRADUATE STUDY IN KAZAKHSTAN
+            <span className="status-dot" /> ДЛЯ УЧЕНИКОВ 9–12 КЛАССОВ
           </div>
           <h1>
-            Build your personal
+            Твоё будущее в IT.
             <br />
-            <span>admission plan.</span>
+            <span>Твой маршрут.</span>
           </h1>
-          <p className="hero-description">
-            Find IT programs that fit your interests. Understand your options, compare the details, and know
-            what to do next.
+          <p>
+            От первых интересов до поступления в университет Казахстана. Найди подходящие программы и преврати
+            большую цель в понятные шаги.
           </p>
           <div className="hero-actions">
-            <Link className="button primary large" href={admission.state.profile ? '/profile' : '/diagnosis'}>
-              {admission.state.profile ? 'Continue my path' : 'Build my path'}
-              <ArrowRight size={19} />
+            <Link className="button primary large" href="/register">
+              Создать аккаунт <ArrowRight size={19} />
             </Link>
-            <button
-              className="text-button"
-              onClick={() => {
-                admission.loadDemo()
-                go('/universities')
-              }}
-            >
-              Explore a sample path <ArrowRight size={16} />
-            </button>
+            <Link className="button secondary large" href="/sign-in">
+              Войти <ArrowUpRight size={18} />
+            </Link>
           </div>
           <div className="hero-assurance">
             <span>
-              <Check size={15} /> No account needed
+              <Check size={15} /> Под твои интересы и бюджет
             </span>
             <span>
-              <Check size={15} /> Your progress stays on this device
+              <Check size={15} /> В твоём темпе
             </span>
           </div>
         </div>
-        <div className="path-preview" aria-label="Illustrative admission journey">
-          <div className="preview-top">
-            <span className="eyebrow">A LOOK AT YOUR JOURNEY</span>
-            <span className="pill subtle">Example</span>
+        <div
+          className="landing-map"
+          aria-label="Пример маршрута: профиль, программы, подготовка, поступление"
+        >
+          <div className="landing-map-heading">
+            <span className="small-label">ОТ ТОЧКИ А К ТВОЕЙ ЦЕЛИ</span>
+            <span className="pill">Пример</span>
           </div>
-          <div className="preview-title">
-            <span className="preview-icon">
-              <BookOpen size={23} />
-            </span>
+          <div className="landing-map-line" aria-hidden="true" />
+          <div className="map-stop stop-one">
+            <span>01</span>
             <div>
-              <h2>From interests to a plan</h2>
-              <p>Grade 11 · IT bachelor's · Kazakhstan</p>
+              <small>НАЧАЛО</small>
+              <strong>Твои интересы</strong>
             </div>
           </div>
-          <div className="preview-route">
-            <div className="preview-step">
-              <span className="step-node done">
-                <Check size={15} />
-              </span>
-              <div>
-                <strong>Your starting point</strong>
-                <p>Interests, budget and exam plans</p>
-              </div>
-              <CheckCheck className="muted" size={18} />
-            </div>
-            <div className="preview-step">
-              <span className="step-node">2</span>
-              <div>
-                <strong>A shortlist with reasons</strong>
-                <p>Real programs. Clear uncertainties.</p>
-                <div className="university-chips">
-                  <span>NU</span>
-                  <span>AITU</span>
-                  <span>ENU</span>
-                </div>
-              </div>
-            </div>
-            <div className="preview-step">
-              <span className="step-node">3</span>
-              <div>
-                <strong>A choice you understand</strong>
-                <p>Compare the details that matter to you</p>
-              </div>
-            </div>
-            <div className="preview-next">
-              <span className="small-label">YOUR NEXT ACTION</span>
-              <strong>Check your admissions route</strong>
-              <span>
-                One manageable step at a time <ArrowRight size={16} />
-              </span>
+          <div className="map-stop stop-two">
+            <span>02</span>
+            <div>
+              <small>ВЫБОР</small>
+              <strong>Твои университеты</strong>
             </div>
           </div>
-          <div className="preview-foot">
-            <ShieldCheck size={15} /> Official sources, with unknowns clearly marked
+          <div className="map-stop stop-three">
+            <span>03</span>
+            <div>
+              <small>ДЕЙСТВИЕ</small>
+              <strong>Твоя подготовка</strong>
+            </div>
+          </div>
+          <div className="map-destination">
+            <ArrowUpRight size={25} />
+            <span>
+              Следующая остановка —<br />
+              <strong>поступление.</strong>
+            </span>
           </div>
         </div>
       </section>
       <section className="journey-overview" aria-labelledby="journey-title">
         <div className="section-intro">
           <div>
-            <div className="eyebrow">A CLEAR WAY FORWARD</div>
-            <h2 id="journey-title">Four steps. Your own direction.</h2>
+            <div className="eyebrow">КАК ЭТО РАБОТАЕТ</div>
+            <h2 id="journey-title">
+              Не всё сразу.
+              <br />
+              Один шаг за другим.
+            </h2>
           </div>
           <p>
-            Made for students in grades 9–12.
+            Ты выбираешь направление.
             <br />
-            Start where you are today.
+            Мы помогаем увидеть следующий шаг.
           </p>
         </div>
         <div className="feature-grid">
           {[
             {
-              icon: SlidersHorizontal,
-              title: 'Tell us about you',
-              text: 'A short profile of your interests, plans and priorities.',
-              label: '01 / PROFILE',
+              icon: Fingerprint,
+              title: 'Короткая анкета',
+              text: 'Расскажи об интересах, классе, бюджете и планах. По одному вопросу за раз.',
+              label: '01 / АНКЕТА',
             },
             {
-              icon: MapPin,
-              title: 'Find your options',
-              text: 'A curated shortlist with a reason and a caveat for every option.',
-              label: '02 / MATCHES',
+              icon: Search,
+              title: 'Анализ профиля',
+              text: 'Сопоставим ответы с программами и объясним, почему стоит рассмотреть каждую.',
+              label: '02 / АНАЛИЗ',
             },
             {
-              icon: GitCompareArrows,
-              title: 'See the differences',
-              text: 'Put programs side by side before choosing your focus.',
-              label: '03 / COMPARE',
+              icon: ShieldCheck,
+              title: 'Подходящие университеты',
+              text: 'Сравни программы, сохрани варианты и проверь требования по официальным источникам.',
+              label: '03 / ВЫБОР',
             },
             {
               icon: ListChecks,
-              title: 'Take the next step',
-              text: 'A personal checklist that grows with your preparation.',
-              label: '04 / PLAN',
+              title: 'Личный план',
+              text: 'Экзамены, проекты и документы — в одном маршруте с конкретными действиями.',
+              label: '04 / МАРШРУТ',
             },
           ].map(({ icon: Icon, title, text, label }) => (
             <article className="feature" key={title}>
               <div className="feature-top">
-                <Icon size={22} />
+                <Icon size={23} />
                 <span>{label}</span>
               </div>
               <h3>{title}</h3>
@@ -163,14 +131,30 @@ export default function HomePage({ admission }: { admission: Admission }) {
       </section>
       <section className="transparency-strip">
         <div>
-          <ShieldCheck size={22} />
+          <ShieldCheck size={24} />
           <div>
-            <strong>Know what is verified. See what still needs checking.</strong>
-            <p>Program details link to official sources. Recommendations follow explainable rules.</p>
+            <strong>Решения — твои. Источники — открытые.</strong>
+            <p>
+              Показываем подтверждённые факты и честно отмечаем, что нужно уточнить. Подбор не гарантирует
+              поступление.
+            </p>
           </div>
         </div>
         <Link href="/sources">
-          About our data <ArrowRight size={16} />
+          О наших данных <ArrowRight size={17} />
+        </Link>
+      </section>
+      <section className="landing-bottom">
+        <div>
+          <span className="eyebrow">НАЧНИ С СЕБЯ</span>
+          <h2>
+            Большая цель.
+            <br />
+            Первый простой шаг.
+          </h2>
+        </div>
+        <Link className="button primary large" href="/register">
+          Создать аккаунт <ArrowRight size={19} />
         </Link>
       </section>
     </>

@@ -7,6 +7,7 @@ import { meetsHardConstraints } from '../lib/matching'
 import { Link, useRouter } from '../lib/router'
 import { Empty, Notice, PageHeading } from '../components/Shared'
 import SaveOption from '../components/SaveOption'
+import { ru } from '../lib/labels'
 
 export default function UniversityListPage({ admission }: { admission: Admission }) {
   const [filter, setFilter] = useState('All labels')
@@ -14,8 +15,8 @@ export default function UniversityListPage({ admission }: { admission: Admission
   const p = admission.state.profile
   if (!p)
     return (
-      <Empty title="Your list starts with your profile" href="/diagnosis" action="Begin diagnosis">
-        Tell us what matters to you, then save programs to investigate.
+      <Empty title="Список начинается с анкеты" href="/diagnosis" action="Пройти анкету">
+        Расскажите о планах и сохраняйте интересующие программы.
       </Empty>
     )
   const visible = admission.state.savedOptions.filter(
@@ -24,26 +25,28 @@ export default function UniversityListPage({ admission }: { admission: Admission
   return (
     <>
       <PageHeading
-        eyebrow="MY UNIVERSITY LIST"
-        title="Keep your options in view."
-        description="Save programs, organise your thinking, and choose a focus when you are ready."
-        back="/dashboard"
+        eyebrow="МОИ УНИВЕРСИТЕТЫ"
+        title="Мои университеты"
+        description="Сохраняйте программы, расставляйте приоритеты и выбирайте основную цель."
+        back="/roadmap"
       >
         <Link className="button primary" href="/universities">
-          Find universities
+          Найти университет
           <ArrowRight size={16} />
         </Link>
       </PageHeading>
       <Notice>
-        Dream, Priority, Backup and Considering are personal labels, not admission probabilities. Even a
-        Backup option requires confirmed eligibility and funding.
+        «Мечта», «Цель» и «Запасной вариант» — личные метки, а не вероятность поступления. Для каждого
+        варианта нужно проверить требования и финансирование.
       </Notice>
       <label className="list-filter">
-        Filter by personal label
+        Фильтр по метке
         <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-          <option>All labels</option>
+          <option value="All labels">Все метки</option>
           {listLabels.map((label) => (
-            <option key={label}>{label}</option>
+            <option key={label} value={label}>
+              {ru(label)}
+            </option>
           ))}
         </select>
       </label>
@@ -51,17 +54,17 @@ export default function UniversityListPage({ admission }: { admission: Admission
         <section className="empty panel">
           <h2>
             {admission.state.savedOptions.length
-              ? 'No programs with this label'
-              : 'Your list is ready for its first option'}
+              ? 'Нет программ с этой меткой'
+              : 'Добавьте первый университет'}
           </h2>
-          <p>Open a program and choose a personal label to save it here.</p>
+          <p>Откройте программу и добавьте её в список.</p>
           {admission.state.savedOptions.length ? (
             <button className="button secondary" onClick={() => setFilter('All labels')}>
-              Show all saved options
+              Показать все варианты
             </button>
           ) : (
             <Link className="button primary" href="/universities">
-              Explore universities
+              Найти университет
             </Link>
           )}
         </section>
@@ -75,19 +78,19 @@ export default function UniversityListPage({ admission }: { admission: Admission
               <article className="panel saved-program" key={option.programId}>
                 <div className="card-top">
                   <span className={`university-monogram ${uni.id}`}>{uni.shortName}</span>
-                  <span className="pill">{option.label}</span>
+                  <span className="pill">{ru(option.label)}</span>
                 </div>
                 <p className="university-name">{uni.name}</p>
                 <h2>
                   <Link href={`/universities/${program.id}`}>{program.title.value}</Link>
                 </h2>
                 <p className="muted">
-                  {uni.city} · {p.entryYear} intended entry
+                  {ru(uni.city)} · {p.entryYear} год поступления
                 </p>
                 {!allowed && (
                   <Notice>
-                    Outside your current hard city constraint. Kept as a bookmark; excluded from your active
-                    roadmap.
+                    Не соответствует ограничению по городу. Остаётся в списке, но не участвует в текущем
+                    маршруте.
                   </Notice>
                 )}
                 <SaveOption admission={admission} programId={program.id} />
@@ -98,7 +101,7 @@ export default function UniversityListPage({ admission }: { admission: Admission
                     aria-pressed={admission.state.comparison.includes(program.id)}
                     onClick={() => admission.toggleCompare(program.id)}
                   >
-                    {admission.state.comparison.includes(program.id) ? 'Remove comparison' : 'Compare'}
+                    {admission.state.comparison.includes(program.id) ? 'Убрать из сравнения' : 'Сравнить'}
                   </button>
                   <button
                     className="button primary"
@@ -111,15 +114,15 @@ export default function UniversityListPage({ admission }: { admission: Admission
                     {admission.state.focus === program.id ? (
                       <>
                         <Check size={15} />
-                        Current focus
+                        Основная программа
                       </>
                     ) : (
-                      'Focus my plan'
+                      'Выбрать для плана'
                     )}
                   </button>
                 </div>
                 <Link className="text-button" href={`/universities/${program.id}`}>
-                  View details
+                  Подробнее
                   <ArrowRight size={15} />
                 </Link>
               </article>
@@ -129,9 +132,9 @@ export default function UniversityListPage({ admission }: { admission: Admission
       )}
       {admission.state.comparison.length > 0 && (
         <div className="page-action">
-          <p>{admission.state.comparison.length} programs selected for comparison.</p>
+          <p>{admission.state.comparison.length} программ выбрано для сравнения.</p>
           <Link className="button secondary" href="/compare">
-            Open comparison
+            Открыть сравнение
             <ArrowRight size={16} />
           </Link>
         </div>

@@ -14,10 +14,10 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { fai
     if (this.state.failed)
       return (
         <main className="empty panel">
-          <h1>Something went wrong.</h1>
-          <p>Your saved progress is still on this device. Reload to try again.</p>
+          <h1>Не удалось открыть страницу.</h1>
+          <p>Сохранённый прогресс остаётся на этом устройстве. Обновите страницу и попробуйте снова.</p>
           <button className="button primary" onClick={() => window.location.reload()}>
-            Reload the page
+            Обновить страницу
           </button>
         </main>
       )

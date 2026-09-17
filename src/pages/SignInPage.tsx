@@ -1,67 +1,121 @@
 import { useState } from 'react'
-import { ArrowRight, ShieldCheck } from 'lucide-react'
+import { ArrowRight, Mail, ShieldCheck } from 'lucide-react'
 import type { Admission } from '../hooks/useAdmission'
+import { api } from '../lib/api'
 import { Link, useRouter } from '../lib/router'
-import { Empty } from '../components/Shared'
 
-export default function SignInPage({ admission }: { admission: Admission }) {
-  const [name, setName] = useState(admission.state.demoSession?.displayName ?? '')
+export default function SignInPage({
+  admission,
+  register = false,
+}: {
+  admission: Admission
+  register?: boolean
+}) {
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
   const { go } = useRouter()
-  if (!admission.state.profile)
-    return (
-      <Empty title="Explore your options first" href="/diagnosis" action="Begin diagnosis">
-        Your answers will carry through to your personal dashboard.
-      </Empty>
-    )
+  async function submit() {
+    if (busy) return
+    setBusy(true)
+    setError('')
+    try {
+      const identity = register
+        ? await api.register(username.trim().toLowerCase(), password)
+        : await api.login(username.trim().toLowerCase(), password)
+      const complete = await admission.activateAccount(identity)
+      go(complete ? '/roadmap' : '/diagnosis')
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Не удалось войти. Попробуйте ещё раз.')
+    } finally {
+      setBusy(false)
+    }
+  }
+  if (admission.loading) return <p role="status">Проверяем вход…</p>
+  if (admission.state.demoAccount)
+    return <Link href={admission.state.profile ? '/profile' : '/diagnosis'}>Продолжить в своём аккаунте</Link>
   return (
-    <div className="sign-in-layout">
-      <section className="panel sign-in-panel">
-        <span className="pill">Demo sign-in</span>
-        <h1>Continue with your plan.</h1>
+    <div className="sign-in-layout auth-page">
+      <section className="panel sign-in-panel auth-panel">
+        <span className="pill">Личный аккаунт</span>
+        <h1>{register ? 'Создать аккаунт' : 'Войти'}</h1>
         <p>
-          Your answers, matches and saved options are already here. This demo accepts everyone, including
-          guests.
+          {register
+            ? 'После создания аккаунта откроется короткая анкета: расскажите о классе, интересах и планах поступления.'
+            : 'Продолжите сохранённый маршрут или вернитесь к незаконченной анкете.'}
         </p>
         <form
           onSubmit={(event) => {
             event.preventDefault()
-            admission.signIn(name)
-            go('/dashboard')
+            void submit()
           }}
+          aria-busy={busy}
         >
           <label>
-            What should we call you? <span className="muted">Optional</span>
+            Имя пользователя
             <input
-              autoComplete="nickname"
-              maxLength={40}
-              placeholder="Student"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              type="text"
+              required
+              autoComplete="username"
+              minLength={3}
+              maxLength={50}
+              pattern="[a-zA-Z0-9_]+"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              aria-describedby="auth-note"
             />
           </label>
-          <button className="button primary" type="submit">
-            Enter demo dashboard
-            <ArrowRight size={17} />
+          <label>
+            Пароль
+            <input
+              type="password"
+              required
+              minLength={8}
+              maxLength={128}
+              autoComplete={register ? 'new-password' : 'current-password'}
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
+          </label>
+          <p id="auth-note" className="muted">
+            Имя: 3–50 латинских букв, цифр или _. Пароль: 8–128 символов. Ответы сохраняются в аккаунте.
+          </p>
+          {error && (
+            <p role="alert" className="error-text">
+              {error}
+            </p>
+          )}
+          <button className="button primary" disabled={busy} type="submit">
+            <Mail size={18} />
+            {busy ? 'Открываем профиль…' : register ? 'Создать аккаунт' : 'Войти'}
+            <ArrowRight size={18} />
           </button>
         </form>
         <div className="info-note">
-          <ShieldCheck size={18} />
-          <div>
-            No password, email verification or real account. This local demo does not authenticate anyone or
-            sync between devices.
-          </div>
+          <ShieldCheck size={20} />
+          <p>
+            Вход по имени пользователя и паролю. Восстановление пароля и вход через Google пока не подключены.
+          </p>
         </div>
-        <Link href="/universities">Back to universities</Link>
+        <Link href={register ? '/sign-in' : '/register'}>
+          {register ? 'Уже есть аккаунт? Войти' : 'Нет аккаунта? Создать аккаунт'}
+        </Link>
       </section>
       <aside>
-        <span className="eyebrow">A PLACE FOR YOUR NEXT STEPS</span>
-        <h2>Your shortlist is just the beginning.</h2>
-        <p>Keep university options, portfolio activities, exam targets and the next action in one place.</p>
-        <ul className="plain-list">
-          <li>Personal university labels</li>
-          <li>Portfolio outcomes you can work toward</li>
-          <li>Small steps that change with your plans</li>
-        </ul>
+        <span className="eyebrow">ВАШ СЛЕДУЮЩИЙ ШАГ</span>
+        <h2>От интереса — к понятному плану.</h2>
+        <p>
+          Ваши ответы доступны после входа с другого устройства. Дополнительные планы пока доступны только до
+          обновления страницы.
+        </p>
+        <ol>
+          <li>Расскажите о себе</li>
+          <li>Проверьте рекомендации</li>
+          <li>Выберите университеты</li>
+          <li>Следуйте своему маршруту</li>
+        </ol>
+        <Link href="/">Вернуться на главную</Link>
       </aside>
     </div>
   )

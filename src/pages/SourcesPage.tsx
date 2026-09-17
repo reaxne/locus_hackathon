@@ -3,76 +3,78 @@ import { checkedAt, programs, sourceUrls, universities } from '../data/universit
 import { External, Fact, PageHeading } from '../components/Shared'
 import type { Admission } from '../hooks/useAdmission'
 import { examResources } from '../data/exams'
+import { examLabel } from '../lib/profile'
 
 export default function SourcesPage({ admission }: { admission: Admission }) {
   return (
     <>
       <PageHeading
-        eyebrow="TRANSPARENCY BY DESIGN"
-        title="Sources & data."
-        description={`Official program pages last checked on ${checkedAt}. We show the limits of what we know.`}
+        eyebrow="ПРОЗРАЧНОСТЬ ДАННЫХ"
+        title="Источники и данные"
+        description={`Страницы программ проверены ${checkedAt}. Для каждого поля отмечены источник и ограничения.`}
         back="/"
       />
       <div className="source-status-grid">
         <article className="panel">
           <CheckCircle2 className="teal" />
-          <h2>Verified</h2>
+          <h2>Подтверждено</h2>
           <p>
-            An official source supports this field. Fees and admissions rules also need to match your intake
-            and applicant category.
+            Поле подтверждено официальным источником. Стоимость и правила должны соответствовать вашему году и
+            категории поступления.
           </p>
         </article>
         <article className="panel">
           <CircleHelp className="terracotta" />
-          <h2>Unknown</h2>
+          <h2>Пока неизвестно</h2>
           <p>
-            Missing, unconfirmed or not applicable to your intake. Displayed as “Check official site”. Unknown
-            never means zero or free.
+            Данные отсутствуют, не подтверждены или не относятся к вашему году. Отметка «Уточните на
+            официальном сайте» не означает нулевую стоимость.
           </p>
         </article>
         <article className="panel">
           <FlaskConical className="teal" />
-          <h2>Illustrative only</h2>
+          <h2>Пример</h2>
           <p>
-            The sample student profile and home preview are examples. The university records are real; no
-            fictional fee or deadline is used.
+            Демонстрационная анкета — пример. Записи университетов реальные; вымышленные цены и сроки не
+            используются.
           </p>
         </article>
       </div>
       <section className="panel methodology">
         <div>
-          <span className="small-label">EXPLAINABLE RECOMMENDATIONS</span>
-          <h2>How your shortlist is made</h2>
+          <span className="small-label">ПОНЯТНЫЕ РЕКОМЕНДАЦИИ</span>
+          <h2>Как формируется подбор</h2>
         </div>
         <ol>
           <li>
-            <strong>Apply hard constraints.</strong> Kazakhstan, bachelor's study, and your city if “Must
-            stay” is selected.
+            <strong>Учитываем строгие ограничения.</strong> Казахстан, бакалавриат и выбранный город при
+            запрете переезда.
           </li>
           <li>
-            <strong>Order by preferences.</strong> Program interests come first, with city, verified
-            affordability and recorded exam preparation as additional signals. Interest tags are editorial
-            mappings of official program descriptions, not entry criteria.
+            <strong>Сортируем по предпочтениям.</strong> Учитываем интересы, город, подтверждённую стоимость и
+            подготовку к экзаменам. Связь интересов с программой — редакционная оценка описания, а не критерий
+            поступления.
           </li>
           <li>
-            <strong>Make gaps visible.</strong> Unknown prices and requirements stay unknown. Over-budget
-            options are labeled. Grant preferences never turn an unknown award into available funding.
+            <strong>Показываем пробелы.</strong> Неизвестные цены и требования остаются неизвестными. Отмечаем
+            превышение бюджета. Желание получить грант не гарантирует его наличие.
           </li>
           <li>
-            <strong>Build relevant actions.</strong> Grade, entry year, saved programs, activities and exam
-            goals determine the checklist. A changed plan retains only tasks with IDs that are still relevant.
+            <strong>Формируем актуальные шаги.</strong> Класс, год поступления, сохранённые программы, занятия
+            и цели определяют список действий. После изменений сохраняются только актуальные выполненные
+            задачи.
           </li>
         </ol>
         <p>
-          These are deterministic, rule-based recommendations. No AI model, admissions probability or
-          scholarship prediction is used. Completed or planned exams are preparation signals only; the current
-          records do not establish exam eligibility.
+          Рекомендации формируются по понятным правилам. Мы не предсказываем вероятность поступления или
+          получения гранта. Статус экзамена показывает подготовку, а не подтверждённое соответствие
+          требованиям.
         </p>
       </section>
       <div className="section-intro">
         <div>
-          <span className="eyebrow">THE CURATED COLLECTION</span>
-          <h2>Three universities. Field-level sources.</h2>
+          <span className="eyebrow">КАТАЛОГ ИСТОЧНИКОВ</span>
+          <h2>Три университета. Источник для каждого поля.</h2>
         </div>
       </div>
       <div className="source-records">
@@ -82,7 +84,7 @@ export default function SourcesPage({ admission }: { admission: Admission }) {
               <span className={`university-monogram ${university.id}`}>{university.shortName}</span>
               <div>
                 <h2>{university.name}</h2>
-                <External href={university.sourceUrl}>Official university reference</External>
+                <External href={university.sourceUrl}>Официальные сведения об университете</External>
               </div>
             </div>
             {programs
@@ -96,12 +98,12 @@ export default function SourcesPage({ admission }: { admission: Admission }) {
                   <div className="source-facts">
                     {(
                       [
-                        ['Program title', program.title],
-                        ['Duration', program.duration],
-                        ['Language', program.language],
-                        ['Tuition in KZT', program.tuition],
-                        ['Deadline', program.deadline],
-                        ['Funding', program.grant],
+                        ['Название программы', program.title],
+                        ['Продолжительность', program.duration],
+                        ['Язык обучения', program.language],
+                        ['Стоимость в ₸', program.tuition],
+                        ['Срок подачи', program.deadline],
+                        ['Финансирование', program.grant],
                       ] as const
                     ).map(([label, fact]) => (
                       <div key={label}>
@@ -113,7 +115,7 @@ export default function SourcesPage({ admission }: { admission: Admission }) {
                       </div>
                     ))}
                     <div>
-                      <strong>Documents</strong>
+                      <strong>Документы</strong>
                       <Fact
                         fact={program.documents}
                         profile={admission.state.profile ?? undefined}
@@ -121,11 +123,11 @@ export default function SourcesPage({ admission }: { admission: Admission }) {
                       />
                     </div>
                     <div>
-                      <strong>Entry requirements</strong>
+                      <strong>Требования к поступлению</strong>
                       <Fact
                         fact={program.examRequirements}
                         profile={admission.state.profile ?? undefined}
-                        format={(items) => items.map((item) => item.exam).join(', ')}
+                        format={(items) => items.map((item) => examLabel(item.exam)).join(', ')}
                       />
                     </div>
                   </div>
@@ -135,47 +137,45 @@ export default function SourcesPage({ admission }: { admission: Admission }) {
         ))}
       </div>
       <section className="panel data-limitations">
-        <h2>Personal goals and portfolio ideas</h2>
+        <h2>Личные цели и идеи портфолио</h2>
         <p>
-          Exam targets and activity periods are entered by you. They are not verified admission thresholds or
-          deadlines. Portfolio suggestions are editorial planning ideas, not public evidence of what admitted
-          students did. We have no verified admitted-student project records in this collection.
+          Цели экзаменов и периоды занятий задаёте вы. Это не подтверждённые требования или сроки поступления.
+          Идеи портфолио — рекомендации для планирования. Подтверждённых проектов поступивших студентов в
+          каталоге пока нет.
         </p>
         <p>
-          Exam preparation links below point to official providers. The step-by-step study tasks are our
-          planning suggestions, not additional university requirements.
+          Ссылки ведут к официальным организаторам экзаменов. Учебные шаги — рекомендации для подготовки, а не
+          дополнительные требования университета.
         </p>
         <div className="button-row">
           {Object.entries(examResources).map(([exam, resource]) => (
             <External key={exam} href={resource.url}>
-              {exam}: {resource.label}
+              {examLabel(exam as import('../types').GoalExamName)}: {resource.label}
             </External>
           ))}
         </div>
       </section>
       <section className="panel data-limitations">
-        <h2>Coverage & limitations</h2>
+        <h2>Охват и ограничения</h2>
         <p>
-          All seeded universities are in Astana. This is a small curated collection, not a complete national
-          catalog. NU and ENU tuition, intake-specific exam thresholds, grants and deadlines are unverified.
-          AITU's 2,500,000 KZT price is recorded only for 2026–2027 and domestic applicants; it is not carried
-          into later years or international routes. Its admissions page lists UNT and AET steps, but the
-          page's dates and thresholds are not attached to a sufficiently clear intake in this dataset, so they
-          remain unknown.
+          Все университеты каталога находятся в Астане. Это небольшая подборка, а не полный каталог
+          Казахстана. Стоимость NU и ЕНУ, пороги экзаменов, гранты и сроки для конкретного года не
+          подтверждены. Цена AITU 2 500 000 ₸ относится только к 2026–2027 году и гражданам Казахстана. Она не
+          переносится на другие годы и категории. Страница AITU упоминает ЕНТ и AET, но привязка дат и порогов
+          к году недостаточно ясна, поэтому эти сведения отмечены как неизвестные.
         </p>
         <p>
-          Some program pages describe current teaching language and duration without a specific admission
-          cycle. Those are program descriptions, not a guarantee of future intake conditions. Recheck all
-          fields before an application.
+          Некоторые страницы указывают язык и продолжительность без года поступления. Это описание программы,
+          а не гарантия будущих условий. Перед подачей перепроверьте сведения.
         </p>
         <p>
-          The government university registry can help verify names and addresses; it does not establish fees,
-          grants or deadlines. It was not used as evidence for admission fields here.
+          Государственный реестр помогает проверить названия и адреса. Он не подтверждает стоимость, гранты и
+          сроки и не используется как источник этих полей.
         </p>
-        <External href={sourceUrls.registry}>Government university registry</External>
+        <External href={sourceUrls.registry}>Государственный реестр университетов</External>
         <p>
-          Records are maintained in the project's source files. Changes saved in your browser affect only your
-          own profile and progress.
+          Общие сведения хранятся в файлах проекта. Изменения в браузере затрагивают только ваш профиль и
+          прогресс.
         </p>
       </section>
     </>

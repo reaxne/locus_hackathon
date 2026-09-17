@@ -8,3 +8,6 @@ tmp/
 .sites-runtime/
 playwright-report/
 test-results/
+.venv/
+__pycache__/
+.pytest_cache/

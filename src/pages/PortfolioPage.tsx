@@ -5,6 +5,7 @@ import { activityCategories, type ActivityCategory, type PlannedActivity } from 
 import { portfolioIdeas, categoryOutcomes } from '../lib/portfolio'
 import { Empty, Notice, PageHeading } from '../components/Shared'
 import { Link } from '../lib/router'
+import { ru } from '../lib/labels'
 
 export default function PortfolioPage({ admission }: { admission: Admission }) {
   const [category, setCategory] = useState<ActivityCategory>('Personal Projects')
@@ -15,8 +16,8 @@ export default function PortfolioPage({ admission }: { admission: Admission }) {
   const p = admission.state.profile
   if (!p)
     return (
-      <Empty title="Give your activities a direction" href="/diagnosis" action="Begin diagnosis">
-        Your grade and interests help us suggest achievable projects and activities.
+      <Empty title="Определите направление для занятий" href="/diagnosis" action="Пройти анкету">
+        Ваш класс и интересы помогают подобрать посильные проекты и занятия.
       </Empty>
     )
   const ideas = portfolioIdeas(p).filter((idea) => filter === 'All categories' || idea.category === filter)
@@ -24,29 +25,28 @@ export default function PortfolioPage({ admission }: { admission: Admission }) {
   return (
     <>
       <PageHeading
-        eyebrow="PORTFOLIO PLAN"
-        title="Build something you can reflect on."
-        description={`Ideas for grade ${p.grade} and ${p.interest.toLowerCase()}. Choose activities that fit your time and interests.`}
-        back="/dashboard"
+        eyebrow="ПЛАН ПОРТФОЛИО"
+        title="От идеи — к результату."
+        description={`Идеи для ${p.grade} класса: ${ru(p.interest).toLowerCase()}. Выбирайте занятия по своим интересам и возможностям.`}
+        back="/roadmap"
       >
         <Link className="button secondary" href="/roadmap">
-          View roadmap
+          Мой маршрут
           <ArrowRight size={16} />
         </Link>
       </PageHeading>
       <Notice>
-        These are portfolio ideas, not verified projects by admitted students or guaranteed admission
-        advantages. Participation and outcomes depend on your own work. Check any event's eligibility and
-        dates yourself.
+        Это идеи для портфолио, а не подтверждённые проекты поступивших студентов или гарантия преимуществ.
+        Проверьте условия участия и даты каждого мероприятия.
       </Notice>
       <section className="panel portfolio-preferences">
-        <h2>What would you like to explore?</h2>
+        <h2>Что вы хотите попробовать?</h2>
         <p>
-          Preferred categories move to the top of your suggestions. Choosing a category does not add an
-          activity automatically.
+          Предпочтительные категории появляются первыми. Выбор категории не добавляет занятие в план
+          автоматически.
         </p>
         <fieldset className="category-chips">
-          <legend className="sr-only">Preferred portfolio categories</legend>
+          <legend className="sr-only">Предпочтительные категории портфолио</legend>
           {activityCategories.map((item) => (
             <label key={item} className={p.extracurricularInterests.includes(item) ? 'selected' : ''}>
               <input
@@ -60,22 +60,24 @@ export default function PortfolioPage({ admission }: { admission: Admission }) {
                   })
                 }
               />
-              {item}
+              {ru(item)}
             </label>
           ))}
         </fieldset>
       </section>
       <div className="section-intro">
         <div>
-          <span className="eyebrow">EXPLORE THE POSSIBILITIES</span>
-          <h2>Suggested activities</h2>
+          <span className="eyebrow">ПОПРОБУЙТЕ НОВОЕ</span>
+          <h2>Идеи занятий</h2>
         </div>
         <label>
-          Category filter
+          Фильтр по категории
           <select value={filter} onChange={(e) => setFilter(e.target.value)}>
-            <option>All categories</option>
+            <option value="All categories">Все категории</option>
             {activityCategories.map((item) => (
-              <option key={item}>{item}</option>
+              <option key={item} value={item}>
+                {ru(item)}
+              </option>
             ))}
           </select>
         </label>
@@ -85,14 +87,14 @@ export default function PortfolioPage({ admission }: { admission: Admission }) {
           const added = admission.state.activities.some((activity) => activity.templateId === idea.id)
           return (
             <article className="panel activity-idea" key={idea.id}>
-              <span className="pill subtle">{idea.category}</span>
+              <span className="pill subtle">{ru(idea.category)}</span>
               <h3>{idea.title}</h3>
               <p>{idea.description}</p>
               <div className="activity-outcome">
-                <span className="small-label">POSSIBLE OUTCOME</span>
+                <span className="small-label">ВОЗМОЖНЫЙ РЕЗУЛЬТАТ</span>
                 <p>{idea.outcome}</p>
               </div>
-              <small>Suggested period: {idea.suggestedPeriod}</small>
+              <small>Примерный период: {idea.suggestedPeriod}</small>
               <button
                 className={`button ${added ? 'secondary' : 'primary'}`}
                 disabled={added || full}
@@ -109,12 +111,12 @@ export default function PortfolioPage({ admission }: { admission: Admission }) {
                 {added ? (
                   <>
                     <Check size={15} />
-                    Added to plan
+                    Добавлено в план
                   </>
                 ) : (
                   <>
                     <Plus size={15} />
-                    Add activity
+                    Добавить занятие
                   </>
                 )}
               </button>
@@ -123,12 +125,12 @@ export default function PortfolioPage({ admission }: { admission: Admission }) {
         })}
       </div>
       <section className="panel custom-activity">
-        <h2>Add your own activity</h2>
+        <h2>Добавить своё занятие</h2>
         <form
           onSubmit={(event) => {
             event.preventDefault()
             if (!title.trim()) {
-              setError('Give your activity a short title.')
+              setError('Напишите короткое название занятия.')
               return
             }
             admission.addActivity({
@@ -145,29 +147,31 @@ export default function PortfolioPage({ admission }: { admission: Admission }) {
         >
           <div className="custom-activity-fields">
             <label>
-              Activity title
+              Название занятия
               <input
                 maxLength={120}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="For example, a school coding workshop"
+                placeholder="Например, школьный кружок программирования"
               />
             </label>
             <label>
-              Activity category
+              Категория занятия
               <select value={category} onChange={(e) => setCategory(e.target.value as ActivityCategory)}>
                 {activityCategories.map((item) => (
-                  <option key={item}>{item}</option>
+                  <option key={item} value={item}>
+                    {ru(item)}
+                  </option>
                 ))}
               </select>
             </label>
             <label>
-              Target period
+              Целевой период
               <input
                 maxLength={80}
                 value={period}
                 onChange={(e) => setPeriod(e.target.value)}
-                placeholder="For example, October 2026"
+                placeholder="Например, октябрь 2026"
               />
             </label>
           </div>
@@ -178,24 +182,21 @@ export default function PortfolioPage({ admission }: { admission: Admission }) {
           )}
           <button className="button primary" disabled={full} type="submit">
             <Plus size={16} />
-            Add to my plan
+            Добавить в мой план
           </button>
         </form>
-        {full && <p role="status">Your plan contains 100 activities. Remove one before adding another.</p>}
+        {full && <p role="status">В плане 100 занятий. Удалите одно, чтобы добавить новое.</p>}
       </section>
       <div className="section-intro">
         <div>
-          <span className="eyebrow">YOUR OWN COMMITMENTS</span>
-          <h2>My activities · {admission.state.activities.length}</h2>
+          <span className="eyebrow">ВАШИ ПЛАНЫ</span>
+          <h2>Мои занятия · {admission.state.activities.length}</h2>
         </div>
       </div>
       {!admission.state.activities.length ? (
         <div className="empty panel">
-          <h2>Start with one small activity.</h2>
-          <p>
-            Add a suggestion above or describe your own idea. You can set a target period and track progress
-            here.
-          </p>
+          <h2>Начните с небольшого занятия.</h2>
+          <p>Добавьте идею из списка или опишите свою. Укажите период и отслеживайте прогресс.</p>
         </div>
       ) : (
         <div className="planned-activities">
@@ -205,10 +206,10 @@ export default function PortfolioPage({ admission }: { admission: Admission }) {
               key={activity.id}
             >
               <div className="card-top">
-                <span className="pill">{activity.category}</span>
+                <span className="pill">{ru(activity.category)}</span>
                 <button
                   className="icon-button"
-                  aria-label={`Remove activity: ${activity.title}`}
+                  aria-label={`Удалить занятие: ${activity.title}`}
                   onClick={() => admission.removeActivity(activity.id)}
                 >
                   <Trash2 size={16} />
@@ -218,19 +219,19 @@ export default function PortfolioPage({ admission }: { admission: Admission }) {
               <p>{categoryOutcomes[activity.category]}</p>
               <div className="form-grid">
                 <label>
-                  Target period
+                  Целевой период
                   <input
                     maxLength={80}
                     value={activity.targetPeriod}
-                    placeholder="Choose a period"
+                    placeholder="Выберите период"
                     onChange={(e) => admission.updateActivity(activity.id, { targetPeriod: e.target.value })}
                   />
-                  <small>Your own target, not an official deadline</small>
+                  <small>Ваша цель, а не официальный срок</small>
                 </label>
                 <label>
-                  Progress
+                  Прогресс
                   <select
-                    aria-label="Progress"
+                    aria-label="Прогресс"
                     value={activity.status}
                     onChange={(e) =>
                       admission.updateActivity(activity.id, {
@@ -238,9 +239,9 @@ export default function PortfolioPage({ admission }: { admission: Admission }) {
                       })
                     }
                   >
-                    <option value="planned">Planned</option>
-                    <option value="in-progress">In progress</option>
-                    <option value="completed">Completed</option>
+                    <option value="planned">Запланировано</option>
+                    <option value="in-progress">В процессе</option>
+                    <option value="completed">Завершено</option>
                   </select>
                 </label>
               </div>

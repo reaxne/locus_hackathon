@@ -4,6 +4,7 @@ import { money } from '../data/universities'
 import { questionIds, examLabel, statusLabels } from '../lib/profile'
 import { examNames } from '../types'
 import { useRouter } from '../lib/router'
+import { ru } from '../lib/labels'
 
 export default function ProfileSummary({
   admission,
@@ -15,39 +16,57 @@ export default function ProfileSummary({
   const p = admission.state.profile!
   const { go } = useRouter()
   const rows: { id: string; label: string; value: string }[] = [
-    { id: 'grade', label: 'School grade', value: `Grade ${p.grade}` },
-    { id: 'entryYear', label: 'University entry', value: String(p.entryYear) },
-    { id: 'interest', label: 'Primary interest', value: p.interest },
-    { id: 'city', label: 'Preferred city', value: p.city },
+    { id: 'grade', label: 'Класс', value: `${p.grade} класс` },
+    { id: 'entryYear', label: 'Год поступления', value: String(p.entryYear) },
+    { id: 'interest', label: 'Главное направление', value: ru(p.interest) },
+    { id: 'city', label: 'Предпочтительный город', value: ru(p.city) },
+    {
+      id: 'studyLanguage',
+      label: 'Язык обучения',
+      value: { any: 'Любой', ru: 'Русский', kk: 'Казахский', en: 'Английский' }[p.studyLanguage],
+    },
+    {
+      id: 'academicPerformance',
+      label: 'Успеваемость',
+      value: {
+        unknown: 'Пока не оценена',
+        excellent: 'Отличная',
+        good: 'Хорошая',
+        'needs-support': 'Нужна поддержка',
+      }[p.academicPerformance],
+    },
+    { id: 'constraints', label: 'Ограничения и пожелания', value: p.constraints || 'Не указаны' },
     {
       id: 'mustStay',
-      label: 'City constraint',
-      value: p.mustStay ? 'Must stay in this city' : 'Flexible location',
+      label: 'Возможность переезда',
+      value: p.mustStay ? 'Только выбранный город' : 'Готов рассмотреть переезд',
     },
-    { id: 'budget', label: 'Annual tuition budget', value: p.budget === null ? 'Unknown' : money(p.budget) },
+    { id: 'budget', label: 'Бюджет на год', value: p.budget === null ? 'Пока неизвестно' : money(p.budget) },
     {
       id: 'funding',
-      label: 'Funding preference',
-      value: { self: 'Self-funded', grant: 'Seeking a grant', either: 'Open to either option' }[p.funding],
+      label: 'Финансирование',
+      value: { self: 'Платное обучение', grant: 'Нужен грант', either: 'Рассматриваю оба варианта' }[
+        p.funding
+      ],
     },
     {
       id: 'category',
-      label: 'Applicant category',
+      label: 'Категория абитуриента',
       value: {
-        domestic: 'Kazakhstan citizen',
-        international: 'International applicant',
-        unknown: 'Not sure yet',
+        domestic: 'Гражданин Казахстана',
+        international: 'Иностранный абитуриент',
+        unknown: 'Пока не знаю',
       }[p.category],
     },
     {
       id: 'academicStrengths',
-      label: 'Academic strengths',
-      value: p.academicStrengths.join(', ') || 'Still exploring',
+      label: 'Сильные стороны',
+      value: p.academicStrengths.map(ru).join(', ') || 'Ещё определяюсь',
     },
     {
       id: 'extracurricularInterests',
-      label: 'Extracurricular interests',
-      value: p.extracurricularInterests.join(', ') || 'Open to suggestions',
+      label: 'Внеучебные интересы',
+      value: p.extracurricularInterests.map(ru).join(', ') || 'Открыт к идеям',
     },
     ...examNames.map((exam) => ({
       id: exam,
@@ -63,7 +82,7 @@ export default function ProfileSummary({
           <dd>{row.value}</dd>
           <button
             className="icon-button"
-            aria-label={`Edit ${row.label}`}
+            aria-label={`Изменить: ${row.label}`}
             onClick={() => {
               admission.setDraft(p)
               admission.setDraftStep(questionIds.findIndex((id) => id === row.id))

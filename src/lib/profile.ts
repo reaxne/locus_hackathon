@@ -4,6 +4,8 @@ export const questionIds = [
   'grade',
   'entryYear',
   'interest',
+  'academicPerformance',
+  'studyLanguage',
   'city',
   'mustStay',
   'budget',
@@ -16,6 +18,7 @@ export const questionIds = [
   'UNT',
   'AET',
   'extracurricularInterests',
+  'constraints',
 ] as const
 export const examLimits = {
   UNT: [0, 140, 1],
@@ -24,12 +27,12 @@ export const examLimits = {
   NUET: [0, 240, 1],
   AET: [0, 100, 1],
 } as const
-export const examLabel = (exam: ExamName) => (exam === 'UNT' ? 'UNT (ENT)' : exam)
+export const examLabel = (exam: ExamName) => (exam === 'UNT' ? 'ЕНТ' : exam)
 export const statusLabels = {
-  unknown: 'Unknown',
-  planned: 'Planned',
-  completed: 'Completed',
-  'not-planned': 'Not planned',
+  unknown: 'Не указано',
+  planned: 'Планирую сдавать',
+  completed: 'Сдан',
+  'not-planned': 'Не планирую',
 }
 export const emptyGoals = () =>
   Object.fromEntries(

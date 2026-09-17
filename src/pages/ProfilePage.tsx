@@ -10,64 +10,62 @@ export default function ProfilePage({ admission }: { admission: Admission }) {
   const p = admission.state.profile
   if (!p)
     return (
-      <Empty title="Start with one question" href="/diagnosis" action="Begin diagnosis">
-        Tell us about your interests and plans. Your answers save automatically as you go.
+      <Empty title="Начните с одного вопроса" href="/diagnosis" action="Пройти анкету">
+        Расскажите об интересах и планах. Ответы сохраняются автоматически.
       </Empty>
     )
   return (
     <>
       <PageHeading
-        eyebrow="YOUR PROFILE"
-        title="Your starting point, in one place."
-        description="Edit any answer. Your university matches and roadmap update with your plans."
-        back={admission.state.demoSession ? '/dashboard' : '/universities'}
+        eyebrow="МОЙ ПРОФИЛЬ"
+        title="Мой профиль"
+        description="Измените любой ответ — рекомендации и маршрут обновятся."
+        back="/roadmap"
       >
         <button className="button secondary" onClick={() => exportProfile(p)}>
           <Download size={16} />
-          Export my profile as JSON
+          Скачать профиль в JSON
         </button>
       </PageHeading>
-      {admission.state.isDemo && (
-        <Notice>This is an illustrative sample profile. Edit any answer to make it yours.</Notice>
-      )}
+      {admission.state.isDemo && <Notice>Это пример анкеты. Измените ответы под свои планы.</Notice>}
       <section className="panel summary-panel">
         <div className="section-intro">
           <div>
-            <span className="eyebrow">YOUR ANSWERS</span>
-            <h2>Goals, strengths and preferences</h2>
+            <span className="eyebrow">ВАШИ ОТВЕТЫ</span>
+            <h2>Цели, сильные стороны и предпочтения</h2>
           </div>
-          <span className="pill">Saved on this device</span>
+          <span className="pill">
+            {admission.saveStatus === 'saved' ? 'Сохранено в аккаунте' : 'Есть несохранённые изменения'}
+          </span>
         </div>
         <ProfileSummary admission={admission} />
       </section>
       <section className="panel summary-panel">
         <div className="section-intro">
           <div>
-            <span className="eyebrow">YOUR EXAM GOALS</span>
-            <h2>Personal targets</h2>
+            <span className="eyebrow">ВАШИ ЦЕЛИ ПО ЭКЗАМЕНАМ</span>
+            <h2>Личные цели</h2>
           </div>
           <Link className="button secondary" href="/exam-goals">
-            Edit exam goals
+            Изменить цели
           </Link>
         </div>
         <div className="profile-goals">
           {goalExamNames.map((exam) => (
             <article key={exam}>
               <strong>{examLabel(exam)}</strong>
-              <span>Current: {p.exams[exam].score ?? 'Unknown'}</span>
-              <span>Target: {p.examGoals[exam].targetScore ?? 'Not set'}</span>
-              <small>{p.examGoals[exam].targetDate ?? 'No target date'} · personal goal</small>
+              <span>Сейчас: {p.exams[exam].score ?? 'Пока неизвестно'}</span>
+              <span>Цель: {p.examGoals[exam].targetScore ?? 'Не задана'}</span>
+              <small>{p.examGoals[exam].targetDate ?? 'Дата не задана'} · личная цель</small>
             </article>
           ))}
         </div>
-        <p className="muted">
-          These targets are yours. They do not mean every university requires these exams.
-        </p>
+        <p className="muted">Это ваши цели. Не все университеты требуют каждый из экзаменов.</p>
       </section>
       <div className="page-action">
-        <p>Official requirements, fees and deadlines still need checking for your intake.</p>
+        <p>Требования, стоимость и сроки нужно уточнить для вашего года поступления.</p>
         <Link className="button primary" href="/universities">
-          See universities
+          Найти университет
           <ArrowRight size={17} />
         </Link>
       </div>

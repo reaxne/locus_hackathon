@@ -19,6 +19,7 @@ import {
 import { examResources } from '../data/exams'
 import { Empty, External, Notice, PageHeading } from '../components/Shared'
 import { Link } from '../lib/router'
+import { ru } from '../lib/labels'
 
 function ExamGoalCard({ exam, admission }: { exam: GoalExamName; admission: Admission }) {
   const p = admission.state.profile!
@@ -37,14 +38,12 @@ function ExamGoalCard({ exam, admission }: { exam: GoalExamName; admission: Admi
     const current = score === '' || status !== 'completed' ? null : Number(score)
     if (!validGoal(exam, goal) || !validScore(exam, current)) {
       setError(
-        `Use a score from ${min} to ${max} in steps of ${step} and a valid target date, or leave values unknown.`,
+        `Укажите балл от ${min} до ${max} с шагом ${step} и корректную дату или оставьте поля пустыми.`,
       )
       return
     }
     if (status === 'not-planned' && (goal.targetScore !== null || goal.targetDate !== null)) {
-      setError(
-        'Choose Planned to keep a target, or clear the target fields if you are not planning this exam.',
-      )
+      setError('Выберите «Запланировано», чтобы сохранить цель, или очистите её, если не планируете экзамен.')
       return
     }
     admission.updateProfile({
@@ -58,14 +57,14 @@ function ExamGoalCard({ exam, admission }: { exam: GoalExamName; admission: Admi
     <article className="panel exam-goal-card">
       <div className="card-top">
         <h2>{examLabel(exam)}</h2>
-        <span className="pill subtle">Personal goal</span>
+        <span className="pill subtle">Личная цель</span>
       </div>
       <p>{examResources[exam].guidance}</p>
       <form noValidate onSubmit={save} onChange={() => setSaved(false)}>
         <label>
-          Current status
+          Текущий статус
           <select
-            aria-label={`${exam} current status`}
+            aria-label={`${examLabel(exam)}: текущий статус`}
             value={status}
             onChange={(e) => {
               const next = e.target.value as ExamStatus
@@ -73,58 +72,58 @@ function ExamGoalCard({ exam, admission }: { exam: GoalExamName; admission: Admi
               if (next !== 'completed') setScore('')
             }}
           >
-            <option value="unknown">Unknown</option>
-            <option value="planned">Planned</option>
-            <option value="completed">Completed</option>
-            <option value="not-planned">Not planned</option>
+            <option value="unknown">Пока неизвестно</option>
+            <option value="planned">Запланировано</option>
+            <option value="completed">Завершено</option>
+            <option value="not-planned">Не планирую</option>
           </select>
         </label>
         <div className="form-grid">
           <label>
-            Current official score
+            Текущий официальный балл
             <input
-              aria-label={`${exam} current score`}
+              aria-label={`${examLabel(exam)}: текущий балл`}
               type="number"
               min={min}
               max={max}
               step={step}
               disabled={status !== 'completed'}
-              placeholder="Unknown"
+              placeholder="Пока неизвестно"
               value={score}
               onChange={(e) => setScore(e.target.value)}
             />
             <small>
               {status === 'completed'
-                ? 'Leave blank if the result is unknown.'
-                : 'Available when status is Completed.'}
+                ? 'Оставьте пустым, если результат неизвестен.'
+                : 'Доступно для статуса «Завершено».'}
             </small>
           </label>
           <label>
-            Target score
+            Целевой балл
             <input
-              aria-label={`${exam} target score`}
+              aria-label={`${examLabel(exam)}: целевой балл`}
               type="number"
               min={min}
               max={max}
               step={step}
-              placeholder="Not set"
+              placeholder="Не задан"
               value={target}
               onChange={(e) => setTarget(e.target.value)}
             />
             <small>
-              {min}–{max} · personal target
+              {min}–{max} · личная цель
             </small>
           </label>
         </div>
         <label>
-          Target date
+          Целевая дата
           <input
-            aria-label={`${exam} target date`}
+            aria-label={`${examLabel(exam)}: целевая дата`}
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
           />
-          <small>Your intended date, not a verified exam session or admission deadline.</small>
+          <small>Ваша планируемая дата, а не подтверждённая дата экзамена или поступления.</small>
         </label>
         {error && (
           <p className="error-text" role="alert">
@@ -133,20 +132,20 @@ function ExamGoalCard({ exam, admission }: { exam: GoalExamName; admission: Admi
         )}
         <div className="exam-save-row">
           <button className="button primary" type="submit">
-            Save {examLabel(exam)} goal
+            Сохранить цель {examLabel(exam)}
           </button>
           {saved && (
             <span role="status">
               <Check size={14} />
-              Saved
+              Сохранено
             </span>
           )}
         </div>
       </form>
       <External href={examResources[exam].url}>{examResources[exam].label}</External>
       <small className="current-goal-note">
-        Saved: {statusLabels[p.exams[exam].status]} · Target {p.examGoals[exam].targetScore ?? 'not set'} ·{' '}
-        {p.examGoals[exam].targetDate ?? 'no date'}
+        Сохранено: {statusLabels[p.exams[exam].status]} · Цель {p.examGoals[exam].targetScore ?? 'не задана'}{' '}
+        · {p.examGoals[exam].targetDate ?? 'дата не задана'}
       </small>
     </article>
   )
@@ -166,10 +165,10 @@ function SectionScores({ admission }: { admission: Admission }) {
   const [message, setMessage] = useState('')
   return (
     <section className="panel section-scores">
-      <h2>IELTS diagnostic section scores</h2>
+      <h2>Диагностика IELTS по разделам</h2>
       <p>
-        Optional practice estimates. These stay separate from your official IELTS result and guide the
-        weak-section step in your roadmap.
+        Необязательные результаты пробного теста. Они хранятся отдельно от официального результата и помогают
+        выбрать слабый раздел в маршруте.
       </p>
       <form
         noValidate
@@ -179,25 +178,25 @@ function SectionScores({ admission }: { admission: Admission }) {
           for (const section of ieltsSections) {
             const value = values[section] === '' ? null : Number(values[section])
             if (!validScore('IELTS', value)) {
-              setMessage('Use 0–9 in half-band steps, or leave a section unknown.')
+              setMessage('Укажите от 0 до 9 с шагом 0,5 или оставьте поле пустым.')
               return
             }
             scores[section] = value
           }
           admission.updateProfile({ ieltsSectionScores: scores as ApplicantProfile['ieltsSectionScores'] })
-          setMessage('Section scores saved. Your practice steps have been updated.')
+          setMessage('Баллы по разделам сохранены. Шаги подготовки обновлены.')
         }}
       >
         <div className="section-score-inputs">
           {ieltsSections.map((section) => (
             <label key={section}>
-              {section}
+              {ru(section)}
               <input
                 type="number"
                 min="0"
                 max="9"
                 step="0.5"
-                placeholder="Unknown"
+                placeholder="Пока неизвестно"
                 value={values[section]}
                 onChange={(e) => setValues((old) => ({ ...old, [section]: e.target.value }))}
               />
@@ -205,7 +204,7 @@ function SectionScores({ admission }: { admission: Admission }) {
           ))}
         </div>
         <button className="button secondary" type="submit">
-          Save section scores
+          Сохранить баллы по разделам
         </button>
         {message && <p role="status">{message}</p>}
       </form>
@@ -215,27 +214,26 @@ function SectionScores({ admission }: { admission: Admission }) {
 export default function ExamGoalsPage({ admission }: { admission: Admission }) {
   if (!admission.state.profile)
     return (
-      <Empty title="Set a starting point first" href="/diagnosis" action="Begin diagnosis">
-        Your profile keeps exam status and personal targets together.
+      <Empty title="Сначала заполните анкету" href="/diagnosis" action="Пройти анкету">
+        Статусы экзаменов и личные цели сохраняются в профиле.
       </Empty>
     )
   return (
     <>
       <PageHeading
-        eyebrow="EXAM GOALS"
-        title="Make your preparation specific."
-        description="Record your current status, choose a target, and turn it into small practice steps."
-        back="/dashboard"
+        eyebrow="ЦЕЛИ ПО ЭКЗАМЕНАМ"
+        title="Подготовка с понятной целью."
+        description="Укажите текущий статус, выберите цель и разбейте подготовку на небольшие шаги."
+        back="/roadmap"
       >
         <Link className="button secondary" href="/roadmap">
-          See preparation steps
+          Мой маршрут
           <ArrowRight size={16} />
         </Link>
       </PageHeading>
       <Notice>
-        You do not need every exam. Check each university's accepted routes before deciding what to take.
-        Target scores and dates below are your own goals, not confirmed admission thresholds or scheduled test
-        sessions.
+        Не все экзамены нужны каждому абитуриенту. Сначала проверьте пути поступления в выбранный университет.
+        Баллы и даты ниже — ваши личные цели, а не подтверждённые требования и расписание.
       </Notice>
       <div className="exam-goals-grid">
         {goalExamNames.map((exam) => (
@@ -244,8 +242,8 @@ export default function ExamGoalsPage({ admission }: { admission: Admission }) {
       </div>
       <SectionScores admission={admission} />
       <p className="aet-note">
-        AET status is available in <Link href="/profile">Profile</Link>. Confirm AITU's module rules with its
-        admissions office; this planner does not interpret AET scores.
+        Статус AET доступен в <Link href="/profile">профиле</Link>. Правила модулей уточните в приёмной
+        комиссии AITU; планировщик не интерпретирует баллы AET.
       </p>
     </>
   )

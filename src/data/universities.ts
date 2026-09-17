@@ -29,7 +29,7 @@ const unknown = <T>(sourceUrl: string): SourcedFact<T> => ({
 export const universities: University[] = [
   {
     id: 'nu',
-    name: 'Nazarbayev University',
+    name: 'Назарбаев Университет',
     shortName: 'NU',
     city: 'Astana',
     country: 'Kazakhstan',
@@ -37,7 +37,7 @@ export const universities: University[] = [
   },
   {
     id: 'aitu',
-    name: 'Astana IT University',
+    name: 'Астана IT Университет',
     shortName: 'AITU',
     city: 'Astana',
     country: 'Kazakhstan',
@@ -45,7 +45,7 @@ export const universities: University[] = [
   },
   {
     id: 'enu',
-    name: 'L.N. Gumilyov Eurasian National University',
+    name: 'Евразийский национальный университет имени Л. Н. Гумилёва',
     shortName: 'ENU',
     city: 'Astana',
     country: 'Kazakhstan',
@@ -61,8 +61,8 @@ const admissionUnknowns = (url: string) => ({
 const aitu = {
   universityId: 'aitu',
   level: 'bachelor' as const,
-  duration: verified('3 years', sourceUrls.aitu),
-  language: verified('English', sourceUrls.aitu),
+  duration: verified('3 года', sourceUrls.aitu),
+  language: verified('Английский', sourceUrls.aitu),
   tuition: { ...verified(2_500_000, sourceUrls.aitu, '2026–2027'), scope: 'domestic' as const },
   ...admissionUnknowns(sourceUrls.aituAdmissions),
   admissionsUrl: sourceUrls.aituAdmissions,
@@ -73,13 +73,13 @@ export const programs: Program[] = [
     id: 'nu-cs',
     universityId: 'nu',
     level: 'bachelor',
-    title: verified('BSc in Computer Science', sourceUrls.nu),
+    title: verified('Бакалавриат: компьютерные науки', sourceUrls.nu),
     code: null,
     primaryInterest: 'Software engineering',
     interests: ['Software engineering', 'AI & data'],
-    description: 'A computer science degree to explore for your software and computing interests.',
+    description: 'Программа по компьютерным наукам для интересующихся разработкой и вычислениями.',
     duration: unknown(sourceUrls.nu),
-    language: verified('English', sourceUrls.nu),
+    language: verified('Английский', sourceUrls.nu),
     tuition: unknown(sourceUrls.nu),
     ...admissionUnknowns(sourceUrls.nu),
     admissionsUrl: sourceUrls.nu,
@@ -88,40 +88,40 @@ export const programs: Program[] = [
   {
     ...aitu,
     id: 'aitu-cs',
-    title: verified('Computer Science', sourceUrls.aituCS),
+    title: verified('Компьютерные науки', sourceUrls.aituCS),
     code: '6B06101',
     primaryInterest: 'AI & data',
     interests: ['AI & data', 'Software engineering'],
-    description: 'Programming, data analysis and machine learning in a computing degree.',
+    description: 'Программирование, анализ данных и машинное обучение.',
   },
   {
     ...aitu,
     id: 'aitu-se',
-    title: verified('Software Engineering', sourceUrls.aituSE),
+    title: verified('Программная инженерия', sourceUrls.aituSE),
     code: '6B06102',
     primaryInterest: 'Software engineering',
     interests: ['Software engineering'],
-    description: 'A focused software pathway for students interested in building applications.',
+    description: 'Программная инженерия для студентов, которые хотят создавать приложения.',
   },
   {
     ...aitu,
     id: 'aitu-cyber',
-    title: verified('Cybersecurity', sourceUrls.aituCyber),
+    title: verified('Кибербезопасность', sourceUrls.aituCyber),
     code: '6B06301',
     primaryInterest: 'Cybersecurity',
     interests: ['Cybersecurity'],
-    description: 'A dedicated cybersecurity program to explore for your security interests.',
+    description: 'Программа по защите информации и безопасности цифровых систем.',
   },
   {
     id: 'enu-cs',
     universityId: 'enu',
     level: 'bachelor',
-    title: verified('Computer Engineering and Software', sourceUrls.enu),
+    title: verified('Вычислительная техника и программное обеспечение', sourceUrls.enu),
     code: '6B06104',
     primaryInterest: 'Software engineering',
     interests: ['Software engineering', 'AI & data', 'Cybersecurity'],
-    description: 'Software development and computer systems, with data and security subjects.',
-    duration: verified('4 years', sourceUrls.enu),
+    description: 'Разработка программ и компьютерных систем, работа с данными и безопасность.',
+    duration: verified('4 года', sourceUrls.enu),
     language: unknown(sourceUrls.enu),
     tuition: unknown(sourceUrls.enu),
     ...admissionUnknowns(sourceUrls.enu),
@@ -140,5 +140,5 @@ export function factApplies<T>(fact: SourcedFact<T>, profile?: ApplicantProfile)
         (!fact.scope || fact.scope === 'all' || fact.scope === profile.category)))
   )
 }
-export const money = (value: number) => `${new Intl.NumberFormat('en-US').format(value)} ₸`
+export const money = (value: number) => `${new Intl.NumberFormat('ru-KZ').format(value)} ₸`
 export const universityFor = (program: Program) => universities.find((u) => u.id === program.universityId)!

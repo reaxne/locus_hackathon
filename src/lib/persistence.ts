@@ -31,6 +31,9 @@ export function emptyProfile(): ApplicantProfile {
     category: 'unknown',
     country: 'Kazakhstan',
     level: 'bachelor',
+    studyLanguage: 'any',
+    academicPerformance: 'unknown',
+    constraints: '',
     exams: Object.fromEntries(
       examNames.map((exam) => [exam, { status: 'unknown', score: null }]),
     ) as ApplicantProfile['exams'],
@@ -65,11 +68,13 @@ export const initialState = (): SavedState => ({
   comparison: [],
   focus: null,
   completed: [],
-  theme: 'system',
+  inProgress: [],
+  theme: 'dark',
   isDemo: false,
   savedOptions: [],
   activities: [],
   demoSession: null,
+  demoAccount: null,
 })
 export function validateProfile(value: unknown): value is ApplicantProfile {
   if (!value || typeof value !== 'object') return false
@@ -87,6 +92,10 @@ export function validateProfile(value: unknown): value is ApplicantProfile {
     ['domestic', 'international', 'unknown'].includes(p.category) &&
     p.country === 'Kazakhstan' &&
     p.level === 'bachelor' &&
+    ['any', 'ru', 'kk', 'en'].includes(p.studyLanguage) &&
+    ['unknown', 'excellent', 'good', 'needs-support'].includes(p.academicPerformance) &&
+    typeof p.constraints === 'string' &&
+    p.constraints.length <= 1000 &&
     Array.isArray(p.academicStrengths) &&
     p.academicStrengths.every((s) => academicStrengths.includes(s)) &&
     Array.isArray(p.extracurricularInterests) &&
@@ -125,7 +134,7 @@ export function validActivity(value: unknown): value is PlannedActivity {
   )
 }
 export function reconcile(state: SavedState): SavedState {
-  if (!state.profile) return { ...state, comparison: [], focus: null, completed: [] }
+  if (!state.profile) return { ...state, comparison: [], focus: null, completed: [], inProgress: [] }
   const allowed = programs.filter((program) => meetsHardConstraints(state.profile!, program)).map((p) => p.id)
   const focus = state.focus && allowed.includes(state.focus) ? state.focus : null
   // Personal bookmarks survive changed preferences; the active plan respects hard constraints.
@@ -137,6 +146,9 @@ export function reconcile(state: SavedState): SavedState {
     comparison: [...new Set(state.comparison.filter((id) => allowed.includes(id)))].slice(0, 3),
     focus,
     completed: [...new Set(state.completed.filter((id) => taskIds.has(id)))],
+    inProgress: [
+      ...new Set((state.inProgress ?? []).filter((id) => taskIds.has(id) && !state.completed.includes(id))),
+    ],
   }
 }
 export function applyProfile(state: SavedState, profile: ApplicantProfile): SavedState {
@@ -150,26 +162,59 @@ export function parseSavedState(raw: string | null): { state: SavedState; recove
     if (!saved || ![2, 3].includes(saved.version)) throw new Error('Unsupported schema')
     const legacy = saved.version === 2
     const upgrade = (p: unknown): unknown =>
-      legacy && p && typeof p === 'object'
+      p && typeof p === 'object'
         ? {
-            ...p,
             academicStrengths: [],
             extracurricularInterests: [],
             examGoals: emptyGoals(),
             ieltsSectionScores: emptySectionScores(),
+            studyLanguage: 'any',
+            academicPerformance: 'unknown',
+            constraints: '',
+            ...p,
           }
         : p
     const profile = upgrade(saved.profile)
     if (profile !== null && !validateProfile(profile)) throw new Error('Invalid saved profile')
     const draft = upgrade(saved.draft)
     const draftValid = validateProfile(draft)
+    const oldQuestionIds = [
+      'grade',
+      'entryYear',
+      'interest',
+      'city',
+      'mustStay',
+      'budget',
+      'funding',
+      'category',
+      'academicStrengths',
+      'SAT',
+      'IELTS',
+      'NUET',
+      'UNT',
+      'AET',
+      'extracurricularInterests',
+    ]
+    const mappedStep =
+      saved.draft &&
+      typeof saved.draft === 'object' &&
+      !('studyLanguage' in saved.draft) &&
+      !legacy &&
+      Number.isInteger(saved.draftStep)
+        ? questionIds.findIndex((id) => id === oldQuestionIds[saved.draftStep])
+        : saved.draftStep
     const strings = (v: unknown): string[] =>
       Array.isArray(v) ? v.filter((id): id is string => typeof id === 'string').slice(0, 1000) : []
     const options: SavedOption[] = Array.isArray(saved.savedOptions)
-      ? saved.savedOptions.filter(
-          (item: SavedOption) =>
-            item && programs.some((p) => p.id === item.programId) && listLabels.includes(item.label),
-        )
+      ? saved.savedOptions
+          .map(
+            (item: { programId: string; label: string }) =>
+              item && { ...item, label: item.label === 'Considering' ? 'Priority' : item.label },
+          )
+          .filter(
+            (item: SavedOption) =>
+              item && programs.some((p) => p.id === item.programId) && listLabels.includes(item.label),
+          )
       : []
     if (legacy && typeof saved.focus === 'string' && programs.some((p) => p.id === saved.focus))
       options.push({ programId: saved.focus, label: 'Priority' })
@@ -188,10 +233,10 @@ export function parseSavedState(raw: string | null): { state: SavedState; recove
         draftStep:
           draftValid &&
           !legacy &&
-          Number.isInteger(saved.draftStep) &&
-          saved.draftStep >= 0 &&
-          saved.draftStep < questionIds.length
-            ? saved.draftStep
+          Number.isInteger(mappedStep) &&
+          mappedStep >= 0 &&
+          mappedStep < questionIds.length
+            ? mappedStep
             : 0,
         answeredQuestions:
           legacy && profile
@@ -200,6 +245,7 @@ export function parseSavedState(raw: string | null): { state: SavedState; recove
         comparison: strings(saved.comparison),
         focus: typeof saved.focus === 'string' ? saved.focus : null,
         completed: strings(saved.completed),
+        inProgress: strings(saved.inProgress),
         theme: ['light', 'dark', 'system'].includes(saved.theme) ? saved.theme : 'system',
         isDemo: saved.isDemo === true,
         savedOptions: [
@@ -209,6 +255,17 @@ export function parseSavedState(raw: string | null): { state: SavedState; recove
         ],
         activities: [...new Map(activities.map((item) => [item.id, item])).values()],
         demoSession: session,
+        demoAccount:
+          saved.demoAccount &&
+          typeof saved.demoAccount.email === 'string' &&
+          typeof saved.demoAccount.displayName === 'string' &&
+          ['email', 'google'].includes(saved.demoAccount.provider)
+            ? {
+                email: saved.demoAccount.email.slice(0, 254),
+                displayName: saved.demoAccount.displayName.slice(0, 40),
+                provider: saved.demoAccount.provider,
+              }
+            : null,
       }),
       recovered: !draftValid,
     }

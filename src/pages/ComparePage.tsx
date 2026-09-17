@@ -3,6 +3,8 @@ import type { Admission } from '../hooks/useAdmission'
 import { programs, universityFor, money } from '../data/universities'
 import { External, Empty, Fact, Notice, PageHeading } from '../components/Shared'
 import { Link, useRouter } from '../lib/router'
+import { ru } from '../lib/labels'
+import { examLabel } from '../lib/profile'
 
 export default function ComparePage({ admission }: { admission: Admission }) {
   const { go } = useRouter()
@@ -10,31 +12,31 @@ export default function ComparePage({ admission }: { admission: Admission }) {
   const selected = programs.filter((program) => admission.state.comparison.includes(program.id))
   if (!profile)
     return (
-      <Empty title="Build a profile first">Your comparison will use your intake, budget and interests.</Empty>
+      <Empty title="Сначала заполните анкету">Сравнение учитывает год поступления, бюджет и интересы.</Empty>
     )
   return (
     <>
       <PageHeading
-        eyebrow="THE DETAILS, SIDE BY SIDE"
-        title="Make an informed choice."
-        description="Compare what is known, keep track of what is missing, and choose one program to plan around."
+        eyebrow="СРАВНЕНИЕ ПРОГРАММ"
+        title="Сравните и выберите."
+        description="Сравните подтверждённые сведения, уточните пробелы и выберите основную программу."
         back="/matches"
       >
         <Link className="button secondary" href="/matches">
-          Change selection
+          Изменить выбор
         </Link>
       </PageHeading>
       {selected.length < 2 ? (
-        <Empty title="Choose at least two programs" href="/matches" action="Choose programs">
+        <Empty title="Выберите хотя бы две программы" href="/matches" action="Выбрать программы">
           {selected.length === 1
-            ? 'One program is selected. Add another to see the differences.'
-            : 'Add two or three options from your shortlist.'}
+            ? 'Выбрана одна программа. Добавьте ещё одну для сравнения.'
+            : 'Добавьте два или три варианта из каталога.'}
         </Empty>
       ) : (
         <>
           <Notice>
-            “Check official site” means we have no verified value for your intake or applicant category. A
-            focus choice is provisional and can be changed.
+            «Уточните на официальном сайте» означает, что сведения не подтверждены для вашего года или
+            категории. Основную программу можно изменить.
           </Notice>
           <div className="comparison-grid" style={{ '--columns': selected.length } as React.CSSProperties}>
             {selected.map((program) => {
@@ -47,7 +49,7 @@ export default function ComparePage({ admission }: { admission: Admission }) {
                       <button
                         className="icon-button"
                         onClick={() => admission.toggleCompare(program.id)}
-                        aria-label={`Remove ${uni.shortName} ${program.title.value}`}
+                        aria-label={`Убрать ${uni.shortName} ${program.title.value}`}
                       >
                         <X size={18} />
                       </button>
@@ -56,72 +58,72 @@ export default function ComparePage({ admission }: { admission: Admission }) {
                     <h2>{program.title.value}</h2>
                     <span className="program-meta">
                       <MapPin size={13} />
-                      {uni.city}, Kazakhstan
+                      {ru(uni.city)}, Казахстан
                     </span>
                   </div>
                   <dl className="comparison-rows">
                     <div>
-                      <dt>Discipline</dt>
+                      <dt>Направление</dt>
                       <dd>
                         {program.title.value}
                         {program.code && <small>{program.code}</small>}
-                        <External href={program.title.sourceUrl}>Program source</External>
-                        <small>Checked {program.title.verifiedAt}</small>
+                        <External href={program.title.sourceUrl}>Источник программы</External>
+                        <small>Проверено {program.title.verifiedAt}</small>
                       </dd>
                     </div>
                     <div>
-                      <dt>Duration</dt>
+                      <dt>Продолжительность</dt>
                       <dd>
                         <Fact fact={program.duration} profile={profile} />
                       </dd>
                     </div>
                     <div>
-                      <dt>Teaching language</dt>
+                      <dt>Язык обучения</dt>
                       <dd>
                         <Fact fact={program.language} profile={profile} />
                       </dd>
                     </div>
                     <div>
-                      <dt>Annual tuition · KZT</dt>
+                      <dt>Стоимость за год · ₸</dt>
                       <dd>
                         <Fact fact={program.tuition} profile={profile} format={money} />
                       </dd>
                     </div>
                     <div>
-                      <dt>Exam requirements</dt>
+                      <dt>Требования к экзаменам</dt>
                       <dd>
                         <Fact
                           fact={program.examRequirements}
                           profile={profile}
                           format={(requirements) =>
                             requirements
-                              .map((r) => `${r.exam}${r.minimum === null ? '' : `: ${r.minimum}`}`)
+                              .map((r) => `${examLabel(r.exam)}${r.minimum === null ? '' : `: ${r.minimum}`}`)
                               .join(', ')
                           }
                         />
                         <small>
-                          Research topics: {program.researchExams.join(', ')}. These may be alternative
-                          routes; they are not all compulsory.
+                          Что изучить: {program.researchExams.map(examLabel).join(', ')}. Возможны
+                          альтернативные пути; не все экзамены обязательны.
                         </small>
                       </dd>
                     </div>
                     <div>
-                      <dt>Grants & funding</dt>
+                      <dt>Гранты и финансирование</dt>
                       <dd>
                         <Fact fact={program.grant} profile={profile} />
                       </dd>
                     </div>
                     <div>
-                      <dt>Application deadline</dt>
+                      <dt>Срок подачи заявления</dt>
                       <dd>
                         <Fact fact={program.deadline} profile={profile} />
                       </dd>
                     </div>
                     <div>
-                      <dt>Before applying</dt>
+                      <dt>Перед подачей</dt>
                       <dd>
-                        Verify your applicant category, exam route, documents and dates with the university.
-                        <External href={program.admissionsUrl}>Admissions information</External>
+                        Уточните в университете свою категорию, экзамены, документы и даты.
+                        <External href={program.admissionsUrl}>Информация о поступлении</External>
                       </dd>
                     </div>
                   </dl>
@@ -132,7 +134,7 @@ export default function ComparePage({ admission }: { admission: Admission }) {
                       go('/roadmap')
                     }}
                   >
-                    Choose a focus
+                    Выбрать основную программу
                     <ArrowRight size={17} />
                   </button>
                 </article>

@@ -41,7 +41,7 @@ export interface ExamGoal {
   targetScore: number | null
   targetDate: string | null
 }
-export const listLabels = ['Dream', 'Priority', 'Backup', 'Considering'] as const
+export const listLabels = ['Dream', 'Priority', 'Backup'] as const
 export type ListLabel = (typeof listLabels)[number]
 export interface SavedOption {
   programId: string
@@ -67,6 +67,9 @@ export interface ApplicantProfile {
   country: 'Kazakhstan'
   level: 'bachelor'
   exams: Record<ExamName, ExamResult>
+  studyLanguage: 'any' | 'ru' | 'kk' | 'en'
+  academicPerformance: 'unknown' | 'excellent' | 'good' | 'needs-support'
+  constraints: string
   academicStrengths: AcademicStrength[]
   extracurricularInterests: ActivityCategory[]
   examGoals: Record<GoalExamName, ExamGoal>
@@ -123,6 +126,10 @@ export interface RoadmapTask {
   why: string
   how: string[]
   actionPath?: string
+  actionLabel?: string
+  programIds: string[]
+  completionCriteria: string
+  deadlines: { programId: string; value: string | null; sourceUrl: string; status: FactStatus }[]
 }
 export type Theme = 'light' | 'dark' | 'system'
 export interface SavedState {
@@ -133,10 +140,12 @@ export interface SavedState {
   comparison: string[]
   focus: string | null
   completed: string[]
+  inProgress: string[]
   theme: Theme
   isDemo: boolean
   answeredQuestions: string[]
   savedOptions: SavedOption[]
   activities: PlannedActivity[]
   demoSession: { displayName: string } | null
+  demoAccount: { email: string; displayName: string; provider: 'email' | 'google' } | null
 }

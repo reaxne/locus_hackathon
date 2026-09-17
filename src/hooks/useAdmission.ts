@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { programs } from '../data/universities'
 import { recommend } from '../lib/matching'
 import { createPlan } from '../lib/roadmap'
@@ -6,34 +6,81 @@ import {
   applyProfile,
   demoProfile,
   initialState,
-  legacyStorageKey,
-  parseSavedState,
   reconcile,
-  storageKey,
   validateProfile,
   validActivity,
 } from '../lib/persistence'
 import { questionIds } from '../lib/profile'
+import { api, ApiError, type Identity, type RemoteProfile } from '../lib/api'
+import { ProfileSync, type SaveStatus } from '../lib/profileSync'
 import type { ApplicantProfile, Theme, ListLabel, PlannedActivity } from '../types'
 
 export function useAdmission() {
-  const [loaded] = useState(() => {
-    try {
-      return {
-        ...parseSavedState(localStorage.getItem(storageKey) ?? localStorage.getItem(legacyStorageKey)),
-        unavailable: false,
-      }
-    } catch {
-      return { state: initialState(), recovered: false, unavailable: true }
+  const [state, setState] = useState(initialState)
+  const [loading, setLoading] = useState(true)
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved')
+  const [saveError, setSaveError] = useState('')
+  const [conflict, setConflict] = useState(false)
+  const [notice, setNotice] = useState('')
+  const sync = useRef<ProfileSync | null>(null)
+  const baseline = useRef('')
+  const alive = useRef(true)
+  function restore(identity: Identity, remote: RemoteProfile) {
+    if (identity.id !== remote.userId) throw new Error('Аккаунт изменился. Обновите страницу.')
+    if (
+      (remote.profile && !validateProfile(remote.profile)) ||
+      (remote.draft && !validateProfile(remote.draft))
+    )
+      throw new Error('Сохранённый профиль имеет неверный формат. Обратитесь к администратору.')
+    sync.current?.stop()
+    const restored = {
+      ...initialState(),
+      profile: remote.profile,
+      draft: remote.draft ?? initialState().draft,
+      draftStep: remote.draftStep,
+      answeredQuestions: remote.answeredQuestions,
+      demoAccount: identity,
+      demoSession: { displayName: identity.displayName },
     }
-  })
-  const [state, setState] = useState(loaded.state)
-  const [storageError, setStorageError] = useState(loaded.unavailable)
-  const [notice, setNotice] = useState(
-    loaded.recovered
-      ? 'Saved data could not be read in full. Valid progress was retained where possible; please review your profile.'
-      : '',
-  )
+    baseline.current = JSON.stringify({
+      profile: restored.profile,
+      draft: restored.draft,
+      draftStep: restored.draftStep,
+      answeredQuestions: restored.answeredQuestions,
+    })
+    sync.current = new ProfileSync(remote, (status, error) => {
+      if (!alive.current) return
+      setSaveStatus(status)
+      setSaveError(error?.message ?? '')
+      setConflict(error instanceof ApiError && error.status === 409)
+    })
+    setSaveStatus('saved')
+    setSaveError('')
+    setConflict(false)
+    setState((old) => ({ ...restored, theme: old.theme }))
+    return !!remote.profile
+  }
+  useEffect(() => {
+    alive.current = true
+    let cancelled = false
+    void (async () => {
+      try {
+        const identity = await api.me()
+        const remote = await api.profile()
+        if (!cancelled) restore(identity, remote)
+      } catch (error) {
+        if (!cancelled && !(error instanceof ApiError && error.status === 401))
+          setNotice(error instanceof Error ? error.message : 'Не удалось загрузить профиль.')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    })()
+    return () => {
+      cancelled = true
+      alive.current = false
+      sync.current?.stop()
+    }
+  }, [])
   useEffect(() => {
     if (!notice) return
     const timer = window.setTimeout(() => setNotice(''), 6000)
@@ -43,13 +90,28 @@ export function useAdmission() {
     () => window.matchMedia('(prefers-color-scheme: dark)').matches,
   )
   useEffect(() => {
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(state))
-      setStorageError(false)
-    } catch {
-      setStorageError(true)
+    if (!state.demoAccount || !sync.current) return
+    const input = {
+      profile: state.profile,
+      draft: state.draft,
+      draftStep: state.draftStep,
+      answeredQuestions: state.answeredQuestions,
     }
-  }, [state])
+    const serialized = JSON.stringify(input)
+    if (baseline.current === serialized) return
+    baseline.current = serialized
+    sync.current.schedule(input)
+  }, [state.profile, state.draft, state.draftStep, state.answeredQuestions, state.demoAccount])
+  useEffect(() => {
+    const warn = (event: BeforeUnloadEvent) => {
+      if (sync.current?.dirty) {
+        event.preventDefault()
+        event.returnValue = ''
+      }
+    }
+    window.addEventListener('beforeunload', warn)
+    return () => window.removeEventListener('beforeunload', warn)
+  }, [])
   useEffect(() => {
     const query = window.matchMedia('(prefers-color-scheme: dark)')
     const change = () => setSystemDark(query.matches)
@@ -77,14 +139,14 @@ export function useAdmission() {
         answeredQuestions: [...questionIds],
       }),
     )
-    setNotice('Your answers, recommendations and plan are up to date.')
+    setNotice('Профиль, рекомендации и маршрут обновлены.')
   }
   function updateProfile(patch: Partial<ApplicantProfile>) {
     setState((old) => (old.profile ? applyProfile(old, { ...old.profile, ...patch }) : old))
   }
   function toggleCompare(id: string) {
     if (!state.comparison.includes(id) && state.comparison.length >= 3) {
-      setNotice('You can compare up to three programs. Remove one to add another.')
+      setNotice('Можно сравнить до трёх программ. Уберите одну, чтобы добавить другую.')
       return
     }
     setState((old) =>
@@ -104,18 +166,20 @@ export function useAdmission() {
         focus: id,
         savedOptions: old.savedOptions.some((option) => option.programId === id)
           ? old.savedOptions
-          : [...old.savedOptions, { programId: id, label: 'Considering' }],
+          : [...old.savedOptions, { programId: id, label: 'Priority' }],
       }),
     )
-    setNotice('Your focus is saved. The plan includes your saved programs, goals and activities.')
+    setNotice('Приоритетная программа сохранена. Маршрут обновлён.')
   }
   function toggleTask(id: string) {
+    setTaskStatus(id, state.completed.includes(id) ? 'planned' : 'completed')
+  }
+  function setTaskStatus(id: string, status: 'planned' | 'in-progress' | 'completed') {
     setState((old) =>
       reconcile({
         ...old,
-        completed: old.completed.includes(id)
-          ? old.completed.filter((v) => v !== id)
-          : [...old.completed, id],
+        completed: [...old.completed.filter((v) => v !== id), ...(status === 'completed' ? [id] : [])],
+        inProgress: [...old.inProgress.filter((v) => v !== id), ...(status === 'in-progress' ? [id] : [])],
       }),
     )
   }
@@ -176,9 +240,40 @@ export function useAdmission() {
       }),
     )
   }
+  async function activateAccount(identity: Identity) {
+    return restore(identity, await api.profile())
+  }
+  async function signOut(discardUnsaved = false) {
+    try {
+      if (!discardUnsaved) await sync.current?.flush()
+      await api.logout()
+      sync.current?.stop()
+      sync.current = null
+      setSaveError('')
+      setSaveStatus('saved')
+      setState((old) => ({ ...initialState(), theme: old.theme }))
+      return true
+    } catch (error) {
+      setNotice((error as Error).message)
+      return false
+    }
+  }
   return {
     state,
-    storageError,
+    loading,
+    saveStatus,
+    saveError,
+    conflict,
+    retrySave: () => {
+      void sync.current?.retry().catch(() => {})
+    },
+    reloadProfile: async () => {
+      try {
+        restore(await api.me(), await api.profile())
+      } catch (error) {
+        setNotice((error as Error).message)
+      }
+    },
     notice,
     setNotice,
     dark,
@@ -190,6 +285,8 @@ export function useAdmission() {
     toggleCompare,
     chooseFocus,
     toggleTask,
+    setTaskStatus,
+    activateAccount,
     saveOption,
     removeOption,
     answerQuestion,
@@ -199,12 +296,7 @@ export function useAdmission() {
       setState((old) =>
         reconcile({ ...old, activities: old.activities.filter((activity) => activity.id !== id) }),
       ),
-    signIn: (displayName: string) =>
-      setState((old) => ({
-        ...old,
-        demoSession: { displayName: displayName.trim().slice(0, 40) || 'Student' },
-      })),
-    signOut: () => setState((old) => ({ ...old, demoSession: null })),
+    signOut,
     setTheme: (theme: Theme) => setState((old) => ({ ...old, theme })),
     setDraft: (draft: ApplicantProfile) => setState((old) => ({ ...old, draft })),
     setDraftStep: (draftStep: number) => setState((old) => ({ ...old, draftStep })),

@@ -1,6 +1,6 @@
 import { factApplies, money, programs, universities } from '../data/universities'
 import type { ApplicantProfile, Recommendation, Program } from '../types'
-
+import { ru } from './labels'
 export function meetsHardConstraints(profile: ApplicantProfile, program: Program) {
   const university = universities.find((u) => u.id === program.universityId)!
   return (
@@ -14,59 +14,74 @@ export function recommend(profile: ApplicantProfile): Recommendation[] {
     .filter((program) => meetsHardConstraints(profile, program))
     .map((program) => {
       const university = universities.find((u) => u.id === program.universityId)!
-      const reasons: string[] = []
-      const caveats: string[] = []
+      const reasons: string[] = [],
+        caveats: string[] = []
       let rank = 0
       if (program.interests.includes(profile.interest)) {
         rank += program.primaryInterest === profile.interest ? 40 : 25
-        reasons.push(`${profile.interest} aligns with this program's focus or listed subjects.`)
+        reasons.push(`Направление «${ru(profile.interest)}» связано с содержанием программы.`)
       } else
         caveats.push(
-          `This is an adjacent option, rather than a direct ${profile.interest.toLowerCase()} pathway.`,
+          `Смежный вариант: связь с направлением «${ru(profile.interest)}» стоит проверить по учебному плану.`,
         )
       if (university.city === profile.city) {
         rank += 10
-        reasons.push(`Located in your preferred city, ${profile.city}.`)
+        reasons.push(`Находится в выбранном городе: ${ru(profile.city)}.`)
       }
-      if (profile.city === 'Any city') reasons.push('Within your Kazakhstan search area.')
+      if (profile.city === 'Any city') reasons.push('Соответствует поиску по Казахстану.')
       if (profile.academicStrengths.length && program.interests.includes(profile.interest))
         reasons.push(
-          `Your self-reported strengths in ${profile.academicStrengths.join(', ')} give you a starting point for exploring this field; they are not an eligibility assessment.`,
+          `Ваши сильные стороны: ${profile.academicStrengths.map(ru).join(', ')}. Это основа для подготовки, а не оценка шансов поступления.`,
         )
+      if (profile.studyLanguage !== 'any') {
+        if (!factApplies(program.language, profile))
+          caveats.push(
+            `Язык обучения не подтверждён. Уточните наличие обучения на выбранном языке: ${ru(profile.studyLanguage)}.`,
+          )
+        else if (profile.studyLanguage === 'en' && program.language.value === 'Английский') {
+          rank += 30
+          reasons.push('Подтверждённый английский язык обучения совпадает с вашим выбором.')
+        } else {
+          rank -= 50
+          caveats.push(
+            `Подтверждённый язык: ${program.language.value}. Ваш выбор: ${ru(profile.studyLanguage)}; уточните альтернативы.`,
+          )
+        }
+      }
       let group: Recommendation['group'] = 'Needs verification'
       if (factApplies(program.tuition, profile) && profile.budget !== null) {
         if (program.tuition.value! <= profile.budget) {
           group = 'Fits your verified budget'
           rank += 20
           reasons.push(
-            `Listed tuition is within your ${money(profile.budget)} annual budget for ${program.tuition.admissionCycle}.`,
+            `Стоимость укладывается в бюджет ${money(profile.budget)} в год для цикла ${program.tuition.admissionCycle}.`,
           )
         } else {
           group = 'Over budget'
           rank -= 20
           caveats.push(
-            `Listed tuition exceeds your annual budget by ${money(program.tuition.value! - profile.budget)}. Funding is not guaranteed.`,
+            `Стоимость выше бюджета на ${money(program.tuition.value! - profile.budget)}. Получение гранта не гарантировано.`,
           )
         }
       } else
         caveats.push(
           profile.budget === null
-            ? 'Add an annual budget to assess affordability.'
-            : `Tuition for your ${profile.entryYear} intake and applicant category is unverified. Affordability against your ${money(profile.budget)} budget is unknown.`,
+            ? 'Укажите годовой бюджет для оценки стоимости.'
+            : `Стоимость для поступления в ${profile.entryYear} году и вашей категории не подтверждена; соответствие бюджету ${money(profile.budget)} неизвестно.`,
         )
-      // Exam readiness changes explanations; no unverified minimum is treated as eligibility.
       for (const exam of program.researchExams) {
         const result = profile.exams[exam]
         if (result.status === 'completed') {
           rank += 3
           reasons.push(
-            `${exam}${result.score === null ? ' completed (score unknown)' : ` ${result.score}`} recorded: a starting point for checking the admissions route.`,
+            `${ru(exam)}: ${result.score ?? 'сдан, балл не указан'}. Результат полезен для проверки возможного пути поступления; обязательность не установлена.`,
           )
         } else if (result.status === 'planned') {
           rank += 1
-          reasons.push(`Your planned ${exam} can inform the admissions-route discussion.`)
-        } else if (result.status === 'not-planned')
-          caveats.push(`${exam} is not planned; check accepted alternatives before choosing this route.`)
+          reasons.push(
+            `Вы планируете ${ru(exam)}: проверьте, подходит ли этот экзамен для выбранного пути поступления.`,
+          )
+        }
       }
       if (factApplies(program.examRequirements, profile)) {
         for (const requirement of program.examRequirements.value!) {
@@ -79,16 +94,25 @@ export function recommend(profile: ApplicantProfile): Recommendation[] {
           ) {
             rank += 8
             reasons.push(
-              `Your recorded ${requirement.exam} meets the sourced minimum; other admission conditions still apply.`,
+              `Указанный результат ${ru(requirement.exam)} соответствует подтверждённому минимуму. Другие условия также нужно проверить.`,
             )
-          }
+          } else
+            caveats.push(
+              `Подтверждённое требование ${ru(requirement.exam)}${requirement.minimum === null ? '' : `: минимум ${requirement.minimum}`} пока не подтверждено вашим профилем.`,
+            )
         }
       } else
         caveats.push(
-          'Entry thresholds, accepted exam routes and deadlines need confirmation for your intake.',
+          'Пороговые баллы, допустимые экзамены и сроки для вашего года требуют уточнения. Неизвестные требования не считаются вашими пробелами.',
         )
       if (profile.funding !== 'self')
-        caveats.push('Grant eligibility and availability are unverified; no scholarship is assumed.')
+        caveats.push(
+          'Условия и доступность грантов нужно уточнить: стипендия не предполагается автоматически.',
+        )
+      if (profile.constraints.trim())
+        caveats.push(
+          'Дополнительные ограничения из профиля нужно обсудить с приёмной комиссией; каталог не подтверждает их выполнение.',
+        )
       return { program, university, group, reasons, caveats, rank }
     })
     .sort((a, b) => b.rank - a.rank || a.program.id.localeCompare(b.program.id))

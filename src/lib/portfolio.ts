@@ -1,12 +1,12 @@
 import { activityCategories, type ActivityCategory, type ApplicantProfile } from '../types'
-
+import { ru } from './labels'
 export const categoryOutcomes: Record<ActivityCategory, string> = {
-  Hackathons: 'A small working prototype, a team contribution log and a short demonstration.',
-  Volunteering: 'A useful community contribution, feedback and an honest record of your role.',
-  Research: 'A focused question, a reproducible notebook or report, and a discussion of limitations.',
-  'Personal Projects': 'A working application or analysis, documentation and evidence of iteration.',
-  Competitions: 'Practice solutions, a reflection on progress and any participation evidence you earn.',
-  Leadership: 'A realistic team plan, meeting notes and feedback from people you supported.',
+  Hackathons: 'Работающий прототип, описание личного вклада и короткая демонстрация.',
+  Volunteering: 'Полезный результат для сообщества, обратная связь и описание своей роли.',
+  Research: 'Конкретный вопрос, воспроизводимый анализ или отчёт и ограничения исследования.',
+  'Personal Projects': 'Приложение или анализ, документация и история улучшений.',
+  Competitions: 'Решения тренировочных задач, разбор ошибок и подтверждение участия, если оно получено.',
+  Leadership: 'План командной работы, заметки о встречах и обратная связь участников.',
 }
 export interface ActivityIdea {
   id: string
@@ -18,26 +18,22 @@ export interface ActivityIdea {
 }
 export function portfolioIdeas(profile: ApplicantProfile): ActivityIdea[] {
   const early = profile.grade <= 10
-  const theme =
-    profile.interest === 'AI & data'
-      ? 'data'
-      : profile.interest === 'Cybersecurity'
-        ? 'digital safety'
-        : 'software'
   const titles: Record<ActivityCategory, string> = {
-    Hackathons: early ? `Try a school ${theme} challenge` : `Build a ${theme} prototype with a team`,
-    Volunteering: `Help a community group with ${theme}`,
-    Research: early ? `Investigate a small ${theme} question` : `Write a reproducible ${theme} investigation`,
+    Hackathons: early ? 'Попробуйте школьный хакатон' : 'Создайте прототип вместе с командой',
+    Volunteering: 'Помогите местному сообществу с цифровой задачей',
+    Research: early ? 'Исследуйте небольшой вопрос' : 'Проведите воспроизводимое исследование',
     'Personal Projects':
       profile.interest === 'AI & data'
-        ? 'Explore a public dataset in a notebook'
+        ? 'Изучите открытый набор данных'
         : profile.interest === 'Cybersecurity'
-          ? 'Build a digital-safety learning guide'
-          : 'Build a useful school planning app',
+          ? 'Создайте пособие по цифровой безопасности'
+          : 'Создайте полезное приложение для школы',
     Competitions: early
-      ? 'Practice a beginner computing challenge'
-      : 'Prepare a set of timed computing solutions',
-    Leadership: early ? 'Co-organise a small study group' : 'Lead a short peer-learning project',
+      ? 'Решите несколько начальных задач по информатике'
+      : 'Потренируйтесь решать задачи на время',
+    Leadership: early
+      ? 'Организуйте небольшую учебную группу'
+      : 'Проведите короткий проект взаимного обучения',
   }
   return activityCategories
     .map((category) => ({
@@ -45,8 +41,8 @@ export function portfolioIdeas(profile: ApplicantProfile): ActivityIdea[] {
       category,
       title: titles[category],
       outcome: categoryOutcomes[category],
-      description: `${early ? 'Keep the scope small and ask a teacher or mentor for feedback.' : 'Set a clear deliverable and collect evidence of your own contribution.'} Connect the work to ${profile.interest.toLowerCase()}.${profile.interest === 'Cybersecurity' ? ' Use only your own examples, training labs or systems you have permission to study.' : ''}`,
-      suggestedPeriod: early ? 'This school term' : 'Next 6–8 weeks',
+      description: `${early ? 'Начните с небольшой задачи и попросите отзыв учителя.' : 'Определите результат и сохраните доказательства личного вклада.'} Свяжите работу с направлением «${ru(profile.interest)}».${profile.interest === 'Cybersecurity' ? ' Используйте собственные примеры, учебные стенды или системы, на изучение которых у вас есть разрешение.' : ''}`,
+      suggestedPeriod: early ? 'Эта учебная четверть' : 'Ближайшие 6–8 недель',
     }))
     .sort(
       (a, b) =>

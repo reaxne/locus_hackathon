@@ -5,6 +5,7 @@ import { money } from '../data/universities'
 import { External, Fact } from './Shared'
 import SaveOption from './SaveOption'
 import { Link } from '../lib/router'
+import { ru } from '../lib/labels'
 
 export default function ProgramCard({ match, admission }: { match: Recommendation; admission: Admission }) {
   const { program, university, group, reasons, caveats } = match
@@ -16,7 +17,7 @@ export default function ProgramCard({ match, admission }: { match: Recommendatio
         <span
           className={`pill ${group === 'Over budget' ? 'warning' : group === 'Needs verification' ? 'subtle' : ''}`}
         >
-          {group}
+          {ru(group)}
         </span>
       </div>
       <p className="university-name">{university.name}</p>
@@ -26,20 +27,20 @@ export default function ProgramCard({ match, admission }: { match: Recommendatio
       <div className="program-meta">
         <span>
           <MapPin size={13} />
-          {university.city}
+          {ru(university.city)}
         </span>
-        <span>Bachelor's</span>
+        <span>Бакалавриат</span>
         {program.code && <span>{program.code}</span>}
       </div>
       <p className="program-description">{program.description}</p>
       <div className="tuition-block">
-        <span className="small-label">ANNUAL TUITION</span>
+        <span className="small-label">СТОИМОСТЬ ЗА ГОД</span>
         <Fact fact={program.tuition} profile={admission.state.profile!} format={money} />
       </div>
       <div className="reason-section">
         <strong>
           <CircleCheck size={16} />
-          Why consider it
+          Почему стоит рассмотреть
         </strong>
         <ul>
           {reasons.map((reason) => (
@@ -50,7 +51,7 @@ export default function ProgramCard({ match, admission }: { match: Recommendatio
       <div className="caveat-section">
         <strong>
           <CircleHelp size={16} />
-          What to verify
+          Что нужно уточнить
         </strong>
         <ul>
           {caveats.map((caveat) => (
@@ -60,19 +61,19 @@ export default function ProgramCard({ match, admission }: { match: Recommendatio
       </div>
       <div className="card-bottom">
         <Link className="text-button" href={`/universities/${program.id}`}>
-          View program details
+          Подробнее о программе
         </Link>
         <SaveOption admission={admission} programId={program.id} />
-        <External href={program.title.sourceUrl}>Program source</External>
-        <small>Program checked {program.title.verifiedAt}</small>
+        <External href={program.title.sourceUrl}>Источник программы</External>
+        <small>Программа проверена {program.title.verifiedAt}</small>
         <button
           className={`button ${selected ? 'primary' : 'secondary'} compare-toggle`}
           aria-pressed={selected}
-          aria-label={`${selected ? 'Remove' : 'Compare'} ${university.shortName} ${program.title.value}`}
+          aria-label={`${selected ? 'Убрать из сравнения' : 'Сравнить'} ${university.shortName} ${program.title.value}`}
           onClick={() => admission.toggleCompare(program.id)}
         >
           {selected ? <Check size={16} /> : <Plus size={16} />}
-          {selected ? 'Added to comparison' : 'Add to comparison'}
+          {selected ? 'Добавлено к сравнению' : 'Добавить к сравнению'}
         </button>
       </div>
     </article>

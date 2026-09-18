@@ -130,13 +130,20 @@ describe('AI event stream', () => {
       'fetch',
       vi.fn(
         async () =>
-          new Response('{"type":"error","status":429}\n', {
-            headers: { 'content-type': 'application/x-ndjson' },
-          }),
+          new Response(
+            '{"type":"error","status":503,"code":"all_free_models_failed","retryable":true,"previousPlanPreserved":true,"fallbackAvailable":true}\n',
+            {
+              headers: { 'content-type': 'application/x-ndjson' },
+            },
+          ),
       ),
     )
     await expect(request('/ai/profile', 'POST', {}, '1', { requestId: 'trace-id' })).rejects.toMatchObject({
-      status: 429,
+      status: 503,
+      code: 'all_free_models_failed',
+      retryable: true,
+      previousPlanPreserved: true,
+      fallbackAvailable: true,
       message: expect.stringContaining('trace-id'),
     })
   })

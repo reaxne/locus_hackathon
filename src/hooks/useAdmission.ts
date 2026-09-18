@@ -37,6 +37,7 @@ export function useAdmission() {
     setLoadedRoadmapKey('')
     setRoadmapAttempt((value) => value + 1)
     setRoadmapAI(false)
+    setRoadmapFailed(false)
     searchAIRequested.current = false
     setSearchAILoading(false)
     setSearchAIMessage('')
@@ -263,6 +264,7 @@ export function useAdmission() {
   const [roadmapMessage, setRoadmapMessage] = useState('')
   const [roadmapAttempt, setRoadmapAttempt] = useState(0)
   const [roadmapAI, setRoadmapAI] = useState(false)
+  const [roadmapFailed, setRoadmapFailed] = useState(false)
   const selectedIds = [
     ...new Set([...state.savedOptions.map((o) => o.programId), ...(state.focus ? [state.focus] : [])]),
   ]
@@ -284,7 +286,9 @@ export function useAdmission() {
     lastRoadmapAttempt.current = roadmapAttempt
     const options = roadmapOperation.start()
     setRoadmapLoading(true)
+    setRoadmapFailed(false)
     setRoadmapMessage('')
+    const hadCurrentPlan = loadedRoadmapKey === roadmapKey && roadmapMatches.length > 0
     const timer = window.setTimeout(() => {
       void (async () => {
         try {
@@ -294,12 +298,14 @@ export function useAdmission() {
           const response = await api.plan(state.demoAccount!.id, selectedIds, roadmapAI, {
             ...options,
             onBaseline: (data) => {
-              if (!cancelled && !options.signal?.aborted) setRoadmapMatches(adaptRecommendations(data))
+              if (!cancelled && !options.signal?.aborted && !hadCurrentPlan)
+                setRoadmapMatches(adaptRecommendations(data))
             },
           })
           if (cancelled || options.signal?.aborted) return
           const matches = adaptRecommendations(response)
           setRoadmapMatches(matches)
+          setRoadmapFailed(false)
           setLoadedRoadmapKey(roadmapKey)
           const valid = new Set(matches.flatMap((m) => m.tasks.map((t) => t.id)))
           setState((old) => ({
@@ -320,8 +326,19 @@ export function useAdmission() {
               )
           }
         } catch (error) {
-          if (!cancelled && !options.signal?.aborted)
-            setRoadmapMessage(error instanceof Error ? error.message : 'Не удалось обновить маршрут.')
+          if (!cancelled && !options.signal?.aborted) {
+            setRoadmapFailed(roadmapAI)
+            if (error instanceof ApiError && error.status === 503) {
+              if (!hadCurrentPlan && error.fallbackAvailable) setLoadedRoadmapKey(roadmapKey)
+              setRoadmapMessage(
+                error.previousPlanPreserved
+                  ? 'ИИ не ответил. Предыдущий сохранённый маршрут не изменён. Повторите попытку.'
+                  : error.fallbackAvailable
+                    ? 'ИИ не ответил. Показан базовый маршрут по проверенным данным. Повторите попытку.'
+                    : error.message,
+              )
+            } else setRoadmapMessage(error instanceof Error ? error.message : 'Не удалось обновить маршрут.')
+          }
         } finally {
           roadmapOperation.finish(options.requestId)
           if (!cancelled) setRoadmapLoading(false)
@@ -508,6 +525,7 @@ export function useAdmission() {
     cancelRoadmap: () => {
       roadmapOperation.cancel()
       setRoadmapLoading(false)
+      setRoadmapFailed(true)
       setRoadmapMessage('Построение прервано. Можно повторить запрос.')
     },
     saveStatus,
@@ -541,6 +559,7 @@ export function useAdmission() {
     },
     roadmapLoading,
     roadmapMessage,
+    roadmapFailed,
     roadmapCurrent: loadedRoadmapKey === roadmapKey && !roadmapLoading,
     generateAIRoadmap: () => {
       if (roadmapLoading) return

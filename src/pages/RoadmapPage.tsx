@@ -53,7 +53,11 @@ export default function RoadmapPage({ admission }: { admission: Admission }) {
           disabled={admission.roadmapLoading}
           onClick={admission.generateAIRoadmap}
         >
-          {admission.roadmapLoading ? 'Обновляем маршрут…' : 'Дополнить маршрут с ИИ'}
+          {admission.roadmapLoading
+            ? 'Обновляем маршрут…'
+            : admission.roadmapFailed
+              ? 'Повторить с ИИ'
+              : 'Дополнить маршрут с ИИ'}
         </button>
         {admission.roadmapMessage && <p role="status">{admission.roadmapMessage}</p>}
       </div>

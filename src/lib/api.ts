@@ -38,6 +38,10 @@ export class ApiError extends Error {
   constructor(
     public status: number,
     message: string,
+    public code?: string,
+    public retryable = false,
+    public previousPlanPreserved = false,
+    public fallbackAvailable = false,
   ) {
     super(message)
   }
@@ -78,7 +82,7 @@ export async function request<T>(
       },
       body: body === undefined ? undefined : JSON.stringify(body),
       signal: AbortSignal.any([
-        AbortSignal.timeout(path.startsWith('/ai/') ? 70000 : 15000),
+        AbortSignal.timeout(path.startsWith('/ai/') ? 95000 : 15000),
         ...(options.signal ? [options.signal] : []),
       ]),
     })
@@ -100,13 +104,32 @@ export async function request<T>(
         ? 'Имя: 3–50 латинских букв, цифр или _. Пароль: 8–128 символов.'
         : 'Сервер отклонил ответы анкеты. Проверьте значения полей.',
       429: 'Запрос уже выполняется или действует ограничение. Повторите через 20 секунд.',
+      503: 'Бесплатные модели не вернули корректный ответ. Повторите попытку.',
     }
+    let failure: {
+      detail?: {
+        code?: string
+        retryable?: boolean
+        previousPlanPreserved?: boolean
+        fallbackAvailable?: boolean
+      }
+    } = {}
+    try {
+      failure = await response.json()
+    } catch {
+      /* An empty error body still maps to a safe localized message. */
+    }
+    const detail = failure.detail
     throw new ApiError(
       response.status,
       messages[response.status] ??
         (method === 'GET'
           ? 'Не удалось загрузить данные с сервера. Повторите попытку.'
           : 'Не удалось сохранить данные на сервере. Повторите попытку.'),
+      detail?.code,
+      detail?.retryable ?? false,
+      detail?.previousPlanPreserved ?? false,
+      detail?.fallbackAvailable ?? false,
     )
   }
   if (response.status === 204) return undefined as T
@@ -133,7 +156,13 @@ export async function request<T>(
             if (event.type === 'error')
               throw new ApiError(
                 event.status,
-                `Не удалось завершить обработку. Повторите попытку. Код запроса: ${options.requestId}`,
+                event.status === 503
+                  ? `Бесплатные модели не вернули корректный ответ. Повторите попытку. Код запроса: ${options.requestId}`
+                  : `Не удалось завершить обработку. Повторите попытку. Код запроса: ${options.requestId}`,
+                event.code,
+                event.retryable ?? false,
+                event.previousPlanPreserved ?? false,
+                event.fallbackAvailable ?? false,
               )
             if (event.type === 'result') {
               diagnostic('render_ready')

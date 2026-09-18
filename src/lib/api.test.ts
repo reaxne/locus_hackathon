@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { api, ApiError, toSurvey } from './api'
+import { api, ApiError, toSurvey, request } from './api'
 import { emptyProfile } from './persistence'
 afterEach(() => vi.unstubAllGlobals())
 const json = (value: unknown, status = 200) => new Response(JSON.stringify(value), { status })
@@ -69,5 +69,75 @@ describe('LocusBackend transport', () => {
     await expect(api.profile()).rejects.toMatchObject({ status: 409 })
     fetch.mockRejectedValueOnce(new Error('offline'))
     await expect(api.profile()).rejects.toBeInstanceOf(ApiError)
+  })
+})
+
+describe('AI event stream', () => {
+  it('parses chunk boundaries and delivers only an actual final result', async () => {
+    const encoder = new TextEncoder()
+    const data =
+      [
+        { type: 'stage', stage: 'model' },
+        { type: 'baseline', data: { recommendations: [] } },
+        { type: 'result', data: { answer: 'готово' } },
+      ]
+        .map((e) => JSON.stringify(e))
+        .join('\n') + '\n'
+    const bytes = encoder.encode(data)
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            new ReadableStream({
+              start(controller) {
+                for (let offset = 0; offset < bytes.length; offset += 3)
+                  controller.enqueue(bytes.slice(offset, offset + 3))
+                controller.close()
+              },
+            }),
+            { headers: { 'content-type': 'application/x-ndjson' } },
+          ),
+      ),
+    )
+    const onStage = vi.fn(),
+      onBaseline = vi.fn()
+    expect(
+      await request('/ai/profile', 'POST', {}, '1', { requestId: 'request', onStage, onBaseline }),
+    ).toEqual({ answer: 'готово' })
+    expect(onStage).toHaveBeenCalledExactlyOnceWith('model')
+    expect(onBaseline).toHaveBeenCalledOnce()
+  })
+  it('rejects interrupted streams and explicit cancellation without returning partial data', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response('{"type":"stage","stage":"model"}\n', {
+            headers: { 'content-type': 'application/x-ndjson' },
+          }),
+      ),
+    )
+    await expect(request('/ai/profile')).rejects.toThrow('Соединение прервалось')
+    const controller = new AbortController()
+    controller.abort()
+    await expect(
+      request('/ai/profile', 'POST', {}, '1', { signal: controller.signal }),
+    ).rejects.toMatchObject({ name: 'AbortError' })
+  })
+  it('reports an error event even when the HTTP stream status is 200', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response('{"type":"error","status":429}\n', {
+            headers: { 'content-type': 'application/x-ndjson' },
+          }),
+      ),
+    )
+    await expect(request('/ai/profile', 'POST', {}, '1', { requestId: 'trace-id' })).rejects.toMatchObject({
+      status: 429,
+      message: expect.stringContaining('trace-id'),
+    })
   })
 })

@@ -33,6 +33,10 @@ app.use('/api', (req, res) => {
     },
   )
   proxy.on('timeout', () => proxy.destroy())
+  req.on('aborted', () => proxy.destroy())
+  res.on('close', () => {
+    if (!res.writableEnded) proxy.destroy()
+  })
   proxy.on('error', () => {
     if (!res.headersSent) res.status(502).json({ detail: 'Python API unavailable' })
     else res.end()

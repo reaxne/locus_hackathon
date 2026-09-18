@@ -42,7 +42,29 @@ export class ApiError extends Error {
     super(message)
   }
 }
-export async function request<T>(path: string, method = 'GET', body?: unknown, userId?: string): Promise<T> {
+export interface RequestOptions {
+  signal?: AbortSignal
+  requestId?: string
+  onStage?: (stage: string) => void
+  onBaseline?: (data: RecommendationResponse) => void
+}
+export async function request<T>(
+  path: string,
+  method = 'GET',
+  body?: unknown,
+  userId?: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  const started = performance.now()
+  const diagnostic = (stage: string) => {
+    if (import.meta.env.DEV && options.requestId)
+      console.debug('locus.ai', {
+        requestId: options.requestId,
+        stage,
+        elapsedMs: Math.round(performance.now() - started),
+      })
+  }
+  diagnostic('request_started')
   let response: Response
   try {
     response = await fetch(`/api${path}`, {
@@ -52,14 +74,22 @@ export async function request<T>(path: string, method = 'GET', body?: unknown, u
         'Content-Type': 'application/json',
         'X-Locus-Request': '1',
         ...(userId ? { 'X-Locus-User': userId } : {}),
+        ...(options.requestId ? { 'X-Request-ID': options.requestId, Accept: 'application/x-ndjson' } : {}),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
-      signal: AbortSignal.timeout(path.startsWith('/ai/') ? 70000 : 15000),
+      signal: AbortSignal.any([
+        AbortSignal.timeout(path.startsWith('/ai/') ? 70000 : 15000),
+        ...(options.signal ? [options.signal] : []),
+      ]),
     })
   } catch {
+    diagnostic(options.signal?.aborted ? 'cancelled' : 'network_error')
+    options.signal?.throwIfAborted()
     throw new ApiError(0, 'Сервер недоступен. Проверьте соединение и повторите сохранение.')
   }
   if (!response.ok) {
+    if (response.status === 401 && !['/auth/login', '/auth/register', '/auth/logout'].includes(path))
+      window.dispatchEvent(new Event('locus:session-expired'))
     const messages: Record<number, string> = {
       401: 'Не удалось подтвердить вход. Проверьте имя пользователя и пароль или войдите заново.',
       403: 'Сервер отклонил запрос. Проверьте адрес сайта в настройках API.',
@@ -81,8 +111,48 @@ export async function request<T>(path: string, method = 'GET', body?: unknown, u
   }
   if (response.status === 204) return undefined as T
   try {
-    return (await response.json()) as T
-  } catch {
+    if (response.headers.get('content-type')?.includes('application/x-ndjson') && response.body) {
+      const reader = response.body.getReader()
+      const decoder = new TextDecoder()
+      let pending = ''
+      try {
+        while (true) {
+          const { value, done } = await reader.read()
+          options.signal?.throwIfAborted()
+          pending += decoder.decode(value, { stream: !done })
+          const lines = pending.split('\n')
+          pending = lines.pop() ?? ''
+          for (const line of lines) {
+            if (!line.trim()) continue
+            const event = JSON.parse(line)
+            if (event.type === 'stage') {
+              diagnostic(event.stage)
+              options.onStage?.(event.stage)
+            }
+            if (event.type === 'baseline') options.onBaseline?.(event.data)
+            if (event.type === 'error')
+              throw new ApiError(
+                event.status,
+                `Не удалось завершить обработку. Повторите попытку. Код запроса: ${options.requestId}`,
+              )
+            if (event.type === 'result') {
+              diagnostic('render_ready')
+              return event.data as T
+            }
+          }
+          if (done) throw new ApiError(0, 'Соединение прервалось. Повторите попытку.')
+        }
+      } finally {
+        await reader.cancel().catch(() => {})
+        reader.releaseLock()
+      }
+    }
+    const data = (await response.json()) as T
+    options.signal?.throwIfAborted()
+    return data
+  } catch (error) {
+    options.signal?.throwIfAborted()
+    if (error instanceof ApiError) throw error
     throw new ApiError(0, 'API вернул неверный ответ. Проверьте подключение Python backend.')
   }
 }
@@ -163,25 +233,35 @@ function decode(data: SurveyEnvelope, userId: string): RemoteProfile {
   }
 }
 export const api = {
-  analyzeProfile: async (userId: string) => {
-    const response = await request<ProfileAnalysisResponse>('/ai/profile', 'POST', {}, userId)
+  cancel: (requestId: string) => request<void>(`/ai/requests/${requestId}/cancel`, 'POST'),
+  analyzeProfile: async (userId: string, options?: RequestOptions) => {
+    const response = await request<ProfileAnalysisResponse>('/ai/profile', 'POST', {}, userId, options)
     if ((await me()).id !== userId) throw new ApiError(409, 'Аккаунт изменился. Войдите заново.')
+    options?.signal?.throwIfAborted()
     return response
   },
-  aiSearch: (userId: string, programIds: string[]) =>
-    request<RecommendationResponse>('/ai/recommendations', 'POST', { programIds, limit: 6 }, userId),
-  plan: async (userId: string, programIds: string[], generateAI = false) => {
+  aiSearch: (userId: string, programIds: string[], options?: RequestOptions) =>
+    request<RecommendationResponse>('/ai/recommendations', 'POST', { programIds, limit: 6 }, userId, options),
+  plan: async (userId: string, programIds: string[], generateAI = false, options?: RequestOptions) => {
     const response = await request<RecommendationResponse>(
       '/ai/roadmap',
       'POST',
       { programIds, limit: 3, generateAI },
       userId,
+      options,
     )
     if ((await me()).id !== userId) throw new ApiError(409, 'Аккаунт изменился. Войдите заново.')
+    options?.signal?.throwIfAborted()
     return response
   },
-  recommendations: async (userId: string) => {
-    const response = await request<RecommendationResponse>('/recommendations?limit=50')
+  recommendations: async (userId: string, options?: RequestOptions) => {
+    const response = await request<RecommendationResponse>(
+      '/recommendations?limit=50',
+      'GET',
+      undefined,
+      userId,
+      options,
+    )
     // Cookies are shared across tabs. Do not render another account's results.
     if ((await me()).id !== userId)
       throw new ApiError(409, 'Аккаунт изменился. Загрузите профиль заново перед просмотром рекомендаций.')

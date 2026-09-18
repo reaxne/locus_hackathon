@@ -7,7 +7,7 @@ const password = 'correct horse battery staple'
 const headers = { Origin: 'http://127.0.0.1:3100', 'X-Locus-Request': '1' }
 const email = () => `student_${crypto.randomUUID().replaceAll('-', '')}`
 async function saved(page: Page) {
-  await expect(page.getByRole('status').filter({ hasText: 'Ответы сохранены в аккаунте' })).toBeVisible()
+  await expect(page.locator('main[data-save-status]')).toHaveAttribute('data-save-status', 'saved')
 }
 async function register(page: Page, address = email()) {
   await page.goto('/register')

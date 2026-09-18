@@ -9,6 +9,7 @@ import ProgramCard from '../components/ProgramCard'
 import { Empty, Notice, PageHeading } from '../components/Shared'
 import { Link } from '../lib/router'
 import ProfileSummary from '../components/ProfileSummary'
+import LoadingState from '../components/LoadingState'
 
 export default function MatchesPage({ admission }: { admission: Admission }) {
   const { programs, universities } = admission
@@ -66,7 +67,11 @@ export default function MatchesPage({ admission }: { admission: Admission }) {
           Изменить анкету
         </Link>
       </PageHeading>
-      <section className="panel ai-controls" aria-label="Подбор по профилю">
+      <section
+        className="panel ai-controls"
+        aria-label="Подбор по профилю"
+        data-request-id={admission.searchRequestId}
+      >
         <p>
           {admission.searchStale
             ? 'Профиль изменился. Обновите подбор, когда закончите редактирование.'
@@ -91,6 +96,9 @@ export default function MatchesPage({ admission }: { admission: Admission }) {
         {admission.searchAIMessage && <p role="status">{admission.searchAIMessage}</p>}
         {admission.recommendationError && <p role="alert">{admission.recommendationError}</p>}
       </section>
+      {(admission.searchAILoading || admission.recommendationsLoading) && (
+        <LoadingState stage={admission.searchStage} onCancel={admission.cancelSearch} />
+      )}
       <details className="panel search-profile-summary">
         <summary>Ваша анкета · проверьте или измените любой ответ</summary>
         <ProfileSummary admission={admission} compact />

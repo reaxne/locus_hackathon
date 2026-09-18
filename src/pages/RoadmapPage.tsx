@@ -4,6 +4,7 @@ import { Empty, PageHeading } from '../components/Shared'
 import TaskDetails from '../components/TaskDetails'
 import { Link } from '../lib/router'
 import { ru } from '../lib/labels'
+import LoadingState from '../components/LoadingState'
 
 export default function RoadmapPage({ admission }: { admission: Admission }) {
   const { programs, universityFor } = admission
@@ -43,7 +44,7 @@ export default function RoadmapPage({ admission }: { admission: Admission }) {
           Изменить профиль
         </Link>
       </PageHeading>
-      <div className="panel ai-controls">
+      <div className="panel ai-controls" data-request-id={admission.roadmapRequestId}>
         <p>
           Цели выполняются по порядку. Изменения экзаменов обновляют маршрут автоматически после сохранения.
         </p>
@@ -56,6 +57,9 @@ export default function RoadmapPage({ admission }: { admission: Admission }) {
         </button>
         {admission.roadmapMessage && <p role="status">{admission.roadmapMessage}</p>}
       </div>
+      {admission.roadmapLoading && (
+        <LoadingState stage={admission.roadmapStage} onCancel={admission.cancelRoadmap} />
+      )}
       <section className="route-overview" aria-label="Обзор подготовки">
         <div className="route-stat">
           <span className="small-label">ТВОЙ ПРОФИЛЬ</span>

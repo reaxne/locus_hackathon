@@ -17,6 +17,7 @@ import PortfolioPage from './pages/PortfolioPage'
 import ExamGoalsPage from './pages/ExamGoalsPage'
 import AnalysisPage from './pages/AnalysisPage'
 import CurrentGoal from './components/CurrentGoal'
+import LoadingState from './components/LoadingState'
 
 const titles: Record<string, string> = {
   '/': 'План поступления',
@@ -43,20 +44,20 @@ export default function App() {
   const publicPage = ['/', '/register', '/sign-in', '/sources'].includes(path)
   const authenticated = !!state.demoSession && !!state.demoAccount
   useEffect(() => {
+    if (!admission.loading && authenticated && ['/', '/sign-in', '/register'].includes(path))
+      go(state.profile ? '/dashboard' : '/diagnosis', true)
+  }, [admission.loading, authenticated, path, !!state.profile])
+  useEffect(() => {
     document.title = `${titles[path] ?? (path.startsWith('/universities/') ? 'Программа обучения' : 'Страница не найдена')} · Казахстан`
   }, [path])
   const content = () => {
-    if (admission.loading) return <p role="status">Загружаем аккаунт…</p>
-    if (path === '/') return <HomePage admission={admission} />
+    if (path === '/' && !authenticated) return <HomePage admission={admission} />
+    if (authenticated && ['/', '/sign-in', '/register'].includes(path))
+      return <LoadingState stage="session" />
     if (path === '/sources') return <SourcesPage admission={admission} />
     if (path === '/register' || path === '/sign-in')
       return <SignInPage key={path} register={path === '/register'} admission={admission} />
-    if (!publicPage && !authenticated)
-      return (
-        <Empty title="Продолжите после входа" href="/sign-in" action="Войти">
-          Создайте аккаунт или войдите, чтобы открыть анкету и личный маршрут.
-        </Empty>
-      )
+    if (!publicPage && !authenticated) return <SignInPage admission={admission} returnPath={path} />
     if (path === '/diagnosis') return <DiagnosisPage admission={admission} />
     if (!state.profile)
       return (
@@ -66,7 +67,15 @@ export default function App() {
       )
     const needsRecommendations = ['/universities', '/matches', '/analysis', '/recommendations'].includes(path)
     if (needsRecommendations && admission.recommendationsLoading && !admission.recommendations.length)
-      return <p role="status">Загружаем рекомендации и маршрут…</p>
+      return (
+        <LoadingState
+          stage={admission.searchStage}
+          onCancel={() => {
+            admission.cancelSearch()
+            go('/diagnosis')
+          }}
+        />
+      )
     if (needsRecommendations && admission.recommendationError && !admission.recommendations.length)
       return (
         <div className="storage-warning" role="alert">
@@ -90,6 +99,24 @@ export default function App() {
       </Empty>
     )
   }
+  if (admission.loading)
+    return (
+      <main id="main" className="app-shell">
+        <LoadingState stage="session" full />
+      </main>
+    )
+  if (admission.sessionError)
+    return (
+      <main id="main" className="main-content">
+        <section className="panel loading-state" role="alert">
+          <h1>Не удалось проверить вход</h1>
+          <p>{admission.sessionError}</p>
+          <button className="button primary" onClick={admission.retrySession}>
+            Повторить
+          </button>
+        </section>
+      </main>
+    )
   return (
     <div className="app-shell">
       <a href="#main" className="skip-link">
@@ -148,7 +175,7 @@ export default function App() {
             onClick={async () => {
               if (await admission.signOut()) {
                 go('/')
-                admission.setNotice('Вы вышли. Анкета и профиль сохранены в аккаунте.')
+                admission.setNotice('Вы вышли из аккаунта.')
               }
             }}
           >
@@ -156,16 +183,7 @@ export default function App() {
           </button>
         </nav>
       )}
-      <main id="main" className="main-content" tabIndex={-1}>
-        {authenticated && (
-          <p role="status">
-            {admission.saveStatus === 'saving'
-              ? 'Сохраняем ответы…'
-              : admission.saveStatus === 'saved'
-                ? 'Ответы сохранены в аккаунте'
-                : 'Есть несохранённые изменения'}
-          </p>
-        )}
+      <main id="main" className="main-content" tabIndex={-1} data-save-status={admission.saveStatus}>
         {admission.saveError && (
           <div className="storage-warning" role="alert">
             {admission.saveError}
@@ -190,7 +208,6 @@ export default function App() {
       <footer className="site-footer">
         <div>
           <span>Поступление в Казахстане · 9–12 классы</span>
-          <span>Анкета и профиль сохраняются в аккаунте</span>
         </div>
         <Link href="/sources">Источники и методика</Link>
       </footer>

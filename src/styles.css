@@ -1,6 +1,101 @@
 @import './styles/app.css';
 @import './styles/planning.css';
 @import './styles/black.css';
+.loading-state {
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  gap: 1rem;
+  padding: clamp(1.5rem, 5vw, 4rem);
+  margin-block: 1rem;
+}
+.loading-state h2 {
+  font-size: clamp(1.2rem, 4vw, 1.7rem);
+  margin: 0 0 0.75rem;
+}
+.loading-state p {
+  max-width: 42ch;
+  margin: 0;
+}
+.loading-full {
+  min-height: 85svh;
+  align-content: center;
+  margin: 0;
+}
+.loading-spinner {
+  animation: waiting-spin 1.5s linear infinite;
+}
+@keyframes waiting-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .loading-spinner {
+    animation: none;
+  }
+}
+.main-content,
+.panel,
+.program-card,
+.route-task,
+.route-stat,
+.header-inner > *,
+.button-row > * {
+  min-width: 0;
+}
+.program-card,
+.route-task,
+.current-goal-panel,
+.route-program-chip,
+.loading-state {
+  overflow-wrap: anywhere;
+}
+input,
+select,
+textarea {
+  max-width: 100%;
+  min-width: 0;
+}
+@media (max-width: 650px) {
+  .workspace-nav {
+    flex-wrap: wrap;
+    overflow: visible;
+    gap: 0.25rem;
+  }
+  .workspace-nav a,
+  .workspace-nav button {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    white-space: normal;
+  }
+  button,
+  .button,
+  select,
+  input {
+    min-height: 44px;
+  }
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+  .header-inner {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+  .header-actions {
+    flex-wrap: wrap;
+  }
+  .loading-state .button {
+    width: 100%;
+  }
+  .route-program-chip {
+    max-width: 100%;
+    white-space: normal;
+  }
+}
 /* Current action remains available across profile, exams and university search. */
 .current-goal {
   position: fixed;

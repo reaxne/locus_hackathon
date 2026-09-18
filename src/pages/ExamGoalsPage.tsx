@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Check, ArrowRight } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import type { Admission } from '../hooks/useAdmission'
 import {
   goalExamNames,
@@ -30,7 +30,6 @@ function ExamGoalCard({ exam, admission }: { exam: GoalExamName; admission: Admi
   )
   const [date, setDate] = useState(p.examGoals[exam].targetDate ?? '')
   const [error, setError] = useState('')
-  const [saved, setSaved] = useState(false)
   const [min, max, step] = examLimits[exam]
   function save(event: React.FormEvent) {
     event.preventDefault()
@@ -51,7 +50,6 @@ function ExamGoalCard({ exam, admission }: { exam: GoalExamName; admission: Admi
       examGoals: { ...p.examGoals, [exam]: goal },
     })
     setError('')
-    setSaved(true)
   }
   return (
     <article className="panel exam-goal-card">
@@ -60,7 +58,7 @@ function ExamGoalCard({ exam, admission }: { exam: GoalExamName; admission: Admi
         <span className="pill subtle">Личная цель</span>
       </div>
       <p>{examResources[exam].guidance}</p>
-      <form noValidate onSubmit={save} onChange={() => setSaved(false)}>
+      <form noValidate onSubmit={save}>
         <label>
           Текущий статус
           <select
@@ -134,18 +132,12 @@ function ExamGoalCard({ exam, admission }: { exam: GoalExamName; admission: Admi
           <button className="button primary" type="submit">
             Сохранить цель {examLabel(exam)}
           </button>
-          {saved && (
-            <span role="status">
-              <Check size={14} />
-              Сохранено
-            </span>
-          )}
         </div>
       </form>
       <External href={examResources[exam].url}>{examResources[exam].label}</External>
       <small className="current-goal-note">
-        Сохранено: {statusLabels[p.exams[exam].status]} · Цель {p.examGoals[exam].targetScore ?? 'не задана'}{' '}
-        · {p.examGoals[exam].targetDate ?? 'дата не задана'}
+        Текущий план: {statusLabels[p.exams[exam].status]} · Цель{' '}
+        {p.examGoals[exam].targetScore ?? 'не задана'} · {p.examGoals[exam].targetDate ?? 'дата не задана'}
       </small>
     </article>
   )

@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import type { Admission } from '../hooks/useAdmission'
 import type { ProfileAnalysisResponse } from '../lib/api'
+import { useOperation } from '../hooks/useOperation'
+import LoadingState from './LoadingState'
 
 export default function ProfileInsights({ admission }: { admission: Admission }) {
   const [result, setResult] = useState<ProfileAnalysisResponse | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const generation = useRef(0)
+  const operation = useOperation()
   const profileKey = JSON.stringify([admission.state.demoAccount?.id, admission.state.profile])
   useEffect(() => {
     generation.current++
@@ -15,24 +18,32 @@ export default function ProfileInsights({ admission }: { admission: Admission })
     setLoading(false)
     return () => {
       generation.current++
+      operation.cancel()
     }
   }, [profileKey])
   async function analyze() {
+    if (loading) return
     const current = ++generation.current
+    const options = operation.start()
     setLoading(true)
     setError('')
     try {
-      const response = await admission.analyzeProfile()
-      if (current === generation.current) setResult(response)
+      const response = await admission.analyzeProfile(options)
+      if (current === generation.current && !options.signal?.aborted) setResult(response)
     } catch (cause) {
-      if (current === generation.current)
+      if (current === generation.current && !options.signal?.aborted)
         setError(cause instanceof Error ? cause.message : 'Не удалось проанализировать профиль.')
     } finally {
+      operation.finish(options.requestId)
       if (current === generation.current) setLoading(false)
     }
   }
   return (
-    <section className="panel summary-panel" aria-label="Анализ профиля с ИИ">
+    <section
+      className="panel summary-panel"
+      aria-label="Анализ профиля с ИИ"
+      data-request-id={operation.requestId}
+    >
       <h2>Сильные стороны и зоны развития</h2>
       <p>
         ИИ объяснит выводы по вашим ответам и предложит конкретные действия. Недостающие данные не считаются
@@ -45,6 +56,16 @@ export default function ProfileInsights({ admission }: { admission: Admission })
       >
         {loading ? 'Анализируем профиль…' : 'Проанализировать профиль с ИИ'}
       </button>
+      {loading && (
+        <LoadingState
+          stage={operation.stage}
+          onCancel={() => {
+            generation.current++
+            operation.cancel()
+            setLoading(false)
+          }}
+        />
+      )}
       {error && <p role="alert">{error}</p>}
       {result?.ai.status === 'unavailable' && (
         <p role="status">

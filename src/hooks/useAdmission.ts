@@ -2,14 +2,21 @@ import { useEffect, useRef, useState } from 'react'
 import { adaptRecommendations, type ServerMatch } from '../lib/recommendations'
 import { applyProfile, initialState, reconcile, validateProfile, validActivity } from '../lib/persistence'
 import { questionIds } from '../lib/profile'
-import { api, ApiError, type Identity, type RemoteProfile } from '../lib/api'
+import { api, ApiError, type Identity, type RemoteProfile, type RequestOptions } from '../lib/api'
+import { useOperation } from './useOperation'
+import { useRouter } from '../lib/router'
 import { ProfileSync, type SaveStatus } from '../lib/profileSync'
 import type { ApplicantProfile, Theme, ListLabel, PlannedActivity } from '../types'
 import { currentTask, changeTaskStatus } from '../lib/taskProgress'
 
 export function useAdmission() {
+  const { path } = useRouter()
+  const searchOperation = useOperation()
+  const roadmapOperation = useOperation()
   const [state, setState] = useState(initialState)
   const [loading, setLoading] = useState(true)
+  const [sessionError, setSessionError] = useState('')
+  const [sessionAttempt, setSessionAttempt] = useState(0)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('saved')
   const [saveError, setSaveError] = useState('')
   const [conflict, setConflict] = useState(false)
@@ -27,6 +34,8 @@ export function useAdmission() {
     sync.current?.stop()
     setRemoteMatches(null)
     setRoadmapMatches([])
+    setLoadedRoadmapKey('')
+    setRoadmapAttempt((value) => value + 1)
     setRoadmapAI(false)
     searchAIRequested.current = false
     setSearchAILoading(false)
@@ -60,6 +69,8 @@ export function useAdmission() {
   }
   useEffect(() => {
     alive.current = true
+    setLoading(true)
+    setSessionError('')
     let cancelled = false
     void (async () => {
       try {
@@ -68,7 +79,7 @@ export function useAdmission() {
         if (!cancelled) restore(identity, remote)
       } catch (error) {
         if (!cancelled && !(error instanceof ApiError && error.status === 401))
-          setNotice(error instanceof Error ? error.message : 'Не удалось загрузить профиль.')
+          setSessionError(error instanceof Error ? error.message : 'Не удалось загрузить профиль.')
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -78,7 +89,39 @@ export function useAdmission() {
       alive.current = false
       sync.current?.stop()
     }
+  }, [sessionAttempt])
+  useEffect(() => {
+    const expire = () => {
+      searchOperation.cancel()
+      roadmapOperation.cancel()
+      setState((old) => ({ ...old, demoSession: null }))
+    }
+    window.addEventListener('locus:session-expired', expire)
+    return () => window.removeEventListener('locus:session-expired', expire)
   }, [])
+  useEffect(() => {
+    if (!state.demoSession || !state.demoAccount) return
+    let checking = false
+    const verify = async () => {
+      if (checking || document.hidden) return
+      checking = true
+      try {
+        if ((await api.me()).id !== state.demoAccount!.id) {
+          setState((old) => ({ ...old, demoSession: null }))
+        }
+      } catch {
+        /* 401 is handled centrally; transient network errors do not erase answers. */
+      } finally {
+        checking = false
+      }
+    }
+    const timer = window.setInterval(() => void verify(), 60000)
+    window.addEventListener('focus', verify)
+    return () => {
+      window.clearInterval(timer)
+      window.removeEventListener('focus', verify)
+    }
+  }, [state.demoAccount?.id, !!state.demoSession])
   useEffect(() => {
     if (!notice) return
     const timer = window.setTimeout(() => setNotice(''), 6000)
@@ -88,7 +131,7 @@ export function useAdmission() {
     () => window.matchMedia('(prefers-color-scheme: dark)').matches,
   )
   useEffect(() => {
-    if (!state.demoAccount || !sync.current) return
+    if (!state.demoSession || !state.demoAccount || !sync.current) return
     const input = {
       profile: state.profile,
       draft: state.draft,
@@ -99,7 +142,14 @@ export function useAdmission() {
     if (baseline.current === serialized) return
     baseline.current = serialized
     sync.current.schedule(input)
-  }, [state.profile, state.draft, state.draftStep, state.answeredQuestions, state.demoAccount])
+  }, [
+    state.profile,
+    state.draft,
+    state.draftStep,
+    state.answeredQuestions,
+    state.demoAccount,
+    !!state.demoSession,
+  ])
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
       if (sync.current?.dirty) {
@@ -127,22 +177,29 @@ export function useAdmission() {
   const searchAIRequested = useRef(false)
   const [searchAIMessage, setSearchAIMessage] = useState('')
   const [searchAILoading, setSearchAILoading] = useState(false)
-  const recommendationKey = JSON.stringify([state.demoAccount?.id, !!state.profile, recommendationAttempt])
+  const recommendationKey = JSON.stringify([
+    state.demoAccount?.id,
+    !!state.profile,
+    recommendationAttempt,
+    !!state.demoSession,
+  ])
   const [searchProfile, setSearchProfile] = useState('')
   useEffect(() => {
     let cancelled = false
     setRecommendationError('')
     setRecommendationWarnings([])
-    if (!state.demoAccount || !state.profile) return
+    if (!state.demoSession || !state.demoAccount || !state.profile) return
+    const options = searchOperation.start()
     void (async () => {
       try {
         // The autosave effect above schedules this profile before we flush it.
         // GET recommendations must only see a successfully committed survey.
         await sync.current?.flush()
-        if (cancelled) return
-        const response = await api.recommendations(state.demoAccount!.id)
+        if (cancelled || options.signal?.aborted) return
+        options.onStage?.('preparing')
+        const response = await api.recommendations(state.demoAccount!.id, { signal: options.signal })
         const matches = adaptRecommendations(response)
-        if (cancelled) return
+        if (cancelled || options.signal?.aborted) return
         setRemoteMatches({ key: recommendationKey, matches })
         setSearchProfile(JSON.stringify(state.profile))
         setRecommendationWarnings(response.warnings)
@@ -158,32 +215,34 @@ export function useAdmission() {
           const aiResponse = await api.aiSearch(
             state.demoAccount!.id,
             matches.slice(0, 6).map((m) => m.program.id),
+            options,
           )
-          if (cancelled) return
+          if (cancelled || options.signal?.aborted) return
           if ((await api.me()).id !== state.demoAccount!.id)
             throw new Error('Аккаунт изменился. Войдите заново.')
+          if (cancelled || options.signal?.aborted) return
           if (aiResponse.ai?.status === 'generated') {
             const enriched = new Map(adaptRecommendations(aiResponse).map((m) => [m.program.id, m]))
             setRemoteMatches({
               key: recommendationKey,
               matches: matches.map((m) => enriched.get(m.program.id) ?? m),
             })
-            setSearchAIMessage(
-              'ИИ объяснил соответствие шести лучших вариантов вашему профилю. Результаты сохранены до следующего обновления.',
-            )
+            setSearchAIMessage('ИИ объяснил соответствие шести лучших вариантов вашему профилю.')
           } else setSearchAIMessage('ИИ временно недоступен. Подбор по анкете выполнен по данным каталога.')
         }
       } catch (error) {
-        if (!cancelled)
+        if (!cancelled && !options.signal?.aborted)
           setRecommendationError(
             error instanceof Error ? error.message : 'Не удалось загрузить рекомендации.',
           )
       } finally {
+        searchOperation.finish(options.requestId)
         if (!cancelled) setSearchAILoading(false)
       }
     })()
     return () => {
       cancelled = true
+      searchOperation.cancel()
     }
   }, [recommendationKey, recommendationAttempt])
   const recommendations =
@@ -209,23 +268,36 @@ export function useAdmission() {
   ]
     .sort()
     .slice(0, 6)
-  const roadmapKey = JSON.stringify([state.demoAccount?.id, state.profile, selectedIds])
+  const roadmapKey = JSON.stringify([state.demoAccount?.id, state.profile, selectedIds, !!state.demoSession])
+  const roadmapVisible = ['/roadmap', '/dashboard'].includes(path)
   const [loadedRoadmapKey, setLoadedRoadmapKey] = useState('')
+  const lastRoadmapAttempt = useRef(-1)
   useEffect(() => {
     let cancelled = false
-    if (!state.profile || !state.demoAccount) {
+    if (!state.demoSession || !state.profile || !state.demoAccount) {
       setRoadmapMatches([])
+      setRoadmapLoading(false)
       return
     }
+    if (!roadmapVisible && !loadedRoadmapKey) return
+    if (loadedRoadmapKey === roadmapKey && lastRoadmapAttempt.current === roadmapAttempt) return
+    lastRoadmapAttempt.current = roadmapAttempt
+    const options = roadmapOperation.start()
     setRoadmapLoading(true)
     setRoadmapMessage('')
     const timer = window.setTimeout(() => {
       void (async () => {
         try {
           await sync.current?.flush()
-          if (cancelled) return
-          const response = await api.plan(state.demoAccount!.id, selectedIds)
-          if (cancelled) return
+          if (cancelled || options.signal?.aborted) return
+          options.onStage?.('preparing')
+          const response = await api.plan(state.demoAccount!.id, selectedIds, roadmapAI, {
+            ...options,
+            onBaseline: (data) => {
+              if (!cancelled && !options.signal?.aborted) setRoadmapMatches(adaptRecommendations(data))
+            },
+          })
+          if (cancelled || options.signal?.aborted) return
           const matches = adaptRecommendations(response)
           setRoadmapMatches(matches)
           setLoadedRoadmapKey(roadmapKey)
@@ -236,8 +308,7 @@ export function useAdmission() {
             inProgress: old.inProgress.filter((id) => valid.has(id)),
           }))
           if (roadmapAI) {
-            const aiResponse = await api.plan(state.demoAccount!.id, selectedIds, true)
-            if (cancelled) return
+            const aiResponse = response
             if (aiResponse.ai?.status === 'generated') {
               setRoadmapMatches(adaptRecommendations(aiResponse))
               setRoadmapMessage(
@@ -249,18 +320,21 @@ export function useAdmission() {
               )
           }
         } catch (error) {
-          if (!cancelled)
+          if (!cancelled && !options.signal?.aborted)
             setRoadmapMessage(error instanceof Error ? error.message : 'Не удалось обновить маршрут.')
         } finally {
+          roadmapOperation.finish(options.requestId)
           if (!cancelled) setRoadmapLoading(false)
         }
       })()
     }, 900)
     return () => {
       cancelled = true
+      roadmapOperation.cancel()
       window.clearTimeout(timer)
+      setRoadmapLoading(false)
     }
-  }, [roadmapKey, roadmapAttempt, roadmapAI])
+  }, [roadmapKey, roadmapAttempt, roadmapAI, roadmapVisible])
   const planMatches = roadmapMatches
   const tasks = [
     ...new Map(planMatches.flatMap((match) => match.tasks).map((task) => [task.id, task])).values(),
@@ -280,7 +354,6 @@ export function useAdmission() {
         answeredQuestions: [...questionIds],
       }),
     )
-    setNotice('Профиль сохраняется. Маршрут обновится в фоне; подбор вузов можно обновить отдельно.')
   }
   function updateProfile(patch: Partial<ApplicantProfile>) {
     setState((old) => (old.profile ? applyProfile(old, { ...old.profile, ...patch }) : old))
@@ -390,6 +463,11 @@ export function useAdmission() {
     )
   }
   async function activateAccount(identity: Identity) {
+    if (identity.id === state.demoAccount?.id && !state.demoSession && sync.current) {
+      setState((old) => ({ ...old, demoSession: { displayName: identity.displayName } }))
+      await sync.current.retry()
+      return !!state.profile
+    }
     return restore(identity, await api.profile())
   }
   async function signOut(discardUnsaved = false) {
@@ -409,12 +487,29 @@ export function useAdmission() {
   }
   return {
     state,
-    analyzeProfile: async () => {
+    analyzeProfile: async (options?: RequestOptions) => {
       if (!state.demoAccount) throw new Error('Войдите в аккаунт.')
       await sync.current?.flush()
-      return api.analyzeProfile(state.demoAccount.id)
+      options?.signal?.throwIfAborted()
+      return api.analyzeProfile(state.demoAccount.id, options)
     },
     loading,
+    sessionError,
+    retrySession: () => setSessionAttempt((v) => v + 1),
+    searchStage: searchOperation.stage,
+    searchRequestId: searchOperation.requestId,
+    roadmapStage: roadmapOperation.stage,
+    roadmapRequestId: roadmapOperation.requestId,
+    cancelSearch: () => {
+      searchOperation.cancel()
+      setSearchAILoading(false)
+      setRecommendationError('Подбор прерван. Можно повторить запрос.')
+    },
+    cancelRoadmap: () => {
+      roadmapOperation.cancel()
+      setRoadmapLoading(false)
+      setRoadmapMessage('Построение прервано. Можно повторить запрос.')
+    },
     saveStatus,
     saveError,
     conflict,
@@ -440,6 +535,7 @@ export function useAdmission() {
     searchAIMessage,
     searchAILoading,
     searchWithAI: () => {
+      if (searchAILoading || recommendationsLoading) return
       searchAIRequested.current = true
       setRecommendationAttempt((v) => v + 1)
     },
@@ -447,6 +543,7 @@ export function useAdmission() {
     roadmapMessage,
     roadmapCurrent: loadedRoadmapKey === roadmapKey && !roadmapLoading,
     generateAIRoadmap: () => {
+      if (roadmapLoading) return
       setRoadmapAI(true)
       setRoadmapAttempt((v) => v + 1)
     },

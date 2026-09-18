@@ -2,6 +2,51 @@
 
 React + TypeScript + Vite frontend for the existing LocusBackend project (`C:/Users/Amir/PycharmProjects/LocusBackend`).
 
+## Сессии, ожидание и отмена
+
+При открытии любого адреса приложение сначала проверяет `/auth/me`, затем загружает
+профиль. До завершения проверки отображается общий экран ожидания: публичная главная
+не мелькает. Действующая сессия на `/` ведёт в `/dashboard` (незавершённая анкета —
+в `/diagnosis`). Гость видит главную; вход с защищённой прямой ссылки возвращает на
+этот адрес. Сессия проверяется при возвращении в окно и раз в минуту; ответ 401
+закрывает личные экраны. Несохранённые ответы остаются в памяти для повторного входа
+в тот же аккаунт, а конфликт версий требует явного выбора серверной версии.
+Обновление страницы до успешного сохранения по-прежнему требует осторожности:
+браузер предупреждает о несохранённых изменениях. Сбой сети при проверке сессии
+показывает ошибку с повторной попыткой, а не выдаёт пользователя за гостя.
+
+`LoadingState` используется для поиска, анализа профиля и маршрута. `useOperation`
+создаёт AbortController и UUID. API передаёт `X-Request-ID` и принимает NDJSON:
+реальные события подготовки, модели, проверки формата и результата. Базовый маршрут
+приходит первым событием `baseline`, ещё до готовности ИИ. Текст модели не показывается
+частями до валидации, чтобы не выдавать непроверенные требования за факты.
+«Прервать» закрывает запрос и отправляет `/ai/requests/{id}/cancel`; после этого
+поздние ответы игнорируются. Анкета сохраняется независимо от отмены анализа.
+На страницах профиля/подбора остаётся исходное содержимое; после анкеты отмена
+возвращает к её последнему шагу. Ошибки имеют повторную попытку.
+
+Маршрут впервые строится при открытии личного кабинета; включение ИИ использует
+один запрос вместо прежних двух. Подбор и маршрут выполняются независимо;
+сохранение профиля обязательно предшествует обоим. Подробности серверных логов
+и защищённого режима отладки описаны в README **LocusBackend**. В development
+консоль браузера выводит только UUID, этап и длительность, без ответов анкеты.
+Блок результата содержит `data-request-id`: этот UUID совпадает с заголовком
+сетевого запроса и серверными логами.
+
+Проверки: `npm run typecheck`, `npm test`, `npm run build`. Полный путь с настоящим
+PostgreSQL: `python scripts/test_locus_backend.py --backend C:/Users/Amir/PycharmProjects/LocusBackend --browser`.
+Можно задать `PLAYWRIGHT_PORT`, если 3100 занят. Скрипт использует отдельный кластер
+на 54329 и сервер на 8001, тестовые пользователи не попадают в рабочую базу.
+Браузерные проверки покрывают desktop/iPhone, длинные названия, 40 шагов,
+истёкшую сессию, прямые ссылки, отмену, поздний ответ, ошибки и повторный запуск.
+
+Замеры 18.09.2026 на локальном каталоге и синтетической анкете, 6 программ:
+медиана поиска 51,89 мс (5 запусков), подготовка шагов 4,65 мс. Контекст до сокращения
+62 565 байт; после: маршрут 53 517, рекомендации 9 537, профиль 3 475 байт.
+Внешний бесплатный AI остаётся главным источником ожидания: живая проверка анализа
+профиля завершилась за 60 с без результата — Gemma/Qwen вернули 429, остальные
+модели не ответили вовремя. Это отображается как недоступность, без выдуманного анализа.
+
 ## Обновление профиля, поиск и маршрут
 
 Ответы сохраняются без размонтирования страницы. Подбор вузов фиксируется до нажатия
@@ -12,7 +57,7 @@ React + TypeScript + Vite frontend for the existing LocusBackend project (`C:/Us
 
 Маршрут запрашивается отдельно через `/ai/roadmap` после сохранения анкеты
 (задержка 900 мс после последнего изменения). Базовый русский маршрут доступен без
-ИИ; «Дополнить маршрут с ИИ» включает подробные русские объяснения Gemma.
+ИИ; «Дополнить маршрут с ИИ» включает подробные русские объяснения бесплатных моделей.
 При ограничении бесплатного провайдера базовые инструкции остаются доступны.
 Последующие изменения профиля обновляют включённые ИИ-советы в фоне.
 Прокси и браузер допускают длительность AI-запроса до 70–75 секунд.
@@ -57,7 +102,7 @@ Production: `npm run build`, then `npm start`. The Node server serves the build 
 
 `src/lib/recommendations.ts` adapts server responses and merges optional AI coaching by program/task IDs. Admission facts and ranking remain server-owned. Personal exam tasks are shared across programs. The first unfinished task defines the next action; the status handler prevents skipping ahead. Selecting saved programs requests a new backend roadmap for those IDs.
 
-Removed: local matching/ranking, local roadmap generation, personalized portfolio generation, the hardcoded university catalog, and unused localStorage migration logic. The frontend retains form validation, formatting, search/filter controls, comparison selection and other UI state. CSS and the visual layout are unchanged.
+Removed: local matching/ranking, local roadmap generation, personalized portfolio generation, the hardcoded university catalog, and unused localStorage migration logic. The frontend retains form validation, formatting, search/filter controls, comparison selection and other UI state. The existing visual style is retained, with shared loading blocks and responsive wrapping/touch targets.
 
 ## Limits of the existing backend
 

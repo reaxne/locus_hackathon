@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react'
 
-const RouterContext = createContext({ path: '/', go: (_path: string) => {} })
+const RouterContext = createContext({ path: '/', go: (_path: string, _replace = false) => {} })
 export function Router({ children }: { children: ReactNode }) {
   const [path, setPath] = useState(window.location.pathname.replace(/\/$/, '') || '/')
   const previousPath = useRef(path)
@@ -23,8 +23,8 @@ export function Router({ children }: { children: ReactNode }) {
     window.scrollTo(0, 0)
     document.getElementById('main')?.focus({ preventScroll: true })
   }, [path])
-  function go(next: string) {
-    if (next !== path) window.history.pushState({}, '', next)
+  function go(next: string, replace = false) {
+    if (next !== path) window.history[replace ? 'replaceState' : 'pushState']({}, '', next)
     setPath(next)
   }
   return <RouterContext.Provider value={{ path, go }}>{children}</RouterContext.Provider>

@@ -7,9 +7,11 @@ import { Link, useRouter } from '../lib/router'
 export default function SignInPage({
   admission,
   register = false,
+  returnPath,
 }: {
   admission: Admission
   register?: boolean
+  returnPath?: string
 }) {
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
@@ -25,7 +27,7 @@ export default function SignInPage({
         ? await api.register(username.trim().toLowerCase(), password)
         : await api.login(username.trim().toLowerCase(), password)
       const complete = await admission.activateAccount(identity)
-      go(complete ? '/roadmap' : '/diagnosis')
+      go(complete ? (returnPath ?? '/dashboard') : '/diagnosis', true)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Не удалось войти. Попробуйте ещё раз.')
     } finally {
@@ -33,7 +35,7 @@ export default function SignInPage({
     }
   }
   if (admission.loading) return <p role="status">Проверяем вход…</p>
-  if (admission.state.demoAccount)
+  if (admission.state.demoSession && admission.state.demoAccount)
     return <Link href={admission.state.profile ? '/profile' : '/diagnosis'}>Продолжить в своём аккаунте</Link>
   return (
     <div className="sign-in-layout auth-page">

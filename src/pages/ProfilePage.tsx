@@ -31,9 +31,6 @@ export default function ProfilePage({ admission }: { admission: Admission }) {
             <span className="eyebrow">ВАШИ ОТВЕТЫ</span>
             <h2>Цели, сильные стороны и предпочтения</h2>
           </div>
-          <span className="pill">
-            {admission.saveStatus === 'saved' ? 'Сохранено в аккаунте' : 'Есть несохранённые изменения'}
-          </span>
         </div>
         <ProfileSummary admission={admission} />
       </section>

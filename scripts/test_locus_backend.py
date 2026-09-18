@@ -27,7 +27,8 @@ try:
     started = True
     result = subprocess.run([sys.executable,'-m','pytest','-q'],cwd=backend,env=env)
     if result.returncode == 0 and args.browser:
-        env['ALLOWED_ORIGINS'] = '["http://127.0.0.1:3100"]'
+        port = os.environ.get('PLAYWRIGHT_PORT', '3100')
+        env['ALLOWED_ORIGINS'] = '["http://127.0.0.1:3100","http://127.0.0.1:' + port + '"]'
         api = subprocess.Popen([sys.executable,'-m','uvicorn','main:app','--host','127.0.0.1','--port','8001'],cwd=backend,env=env)
         for _ in range(50):
             try:

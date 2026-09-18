@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { ArrowRight, GitCompareArrows, X } from 'lucide-react'
-import { interests, type ApplicantProfile, type MatchGroup } from '../types'
+import { type MatchGroup } from '../types'
+import { searchCategories, searchMatches } from '../lib/search'
 import { factApplies } from '../data/universities'
 import { ru } from '../lib/labels'
 import type { Admission } from '../hooks/useAdmission'
@@ -17,6 +18,7 @@ export default function MatchesPage({ admission }: { admission: Admission }) {
   const [cityFilter, setCityFilter] = useState('all')
   const [languageFilter, setLanguageFilter] = useState('all')
   const [requirementsFilter, setRequirementsFilter] = useState('all')
+  const [categoryFilter, setCategoryFilter] = useState('all')
   const profile = admission.state.profile
   if (!profile)
     return (
@@ -24,17 +26,14 @@ export default function MatchesPage({ admission }: { admission: Admission }) {
     )
   const visible = admission.recommendations.filter(
     (match) =>
-      `${match.program.title.value} ${match.university.name} ${match.university.shortName}`
-        .toLowerCase()
-        .includes(query.toLowerCase()) &&
+      searchMatches(match, query, categoryFilter) &&
       (universityFilter === 'all' || match.university.id === universityFilter) &&
       (budgetFilter === 'all' || match.group === budgetFilter) &&
       (cityFilter === 'all' || match.university.city === cityFilter) &&
       (languageFilter === 'all' ||
         (languageFilter === 'unknown'
-          ? !factApplies(match.program.language, profile)
-          : factApplies(match.program.language, profile) &&
-            match.program.language.value === languageFilter)) &&
+          ? !match.program.language.value
+          : match.program.language.value === languageFilter)) &&
       (requirementsFilter === 'all' ||
         (requirementsFilter === 'verified'
           ? factApplies(match.program.examRequirements, profile)
@@ -42,7 +41,7 @@ export default function MatchesPage({ admission }: { admission: Admission }) {
   )
   const hasFilters = Boolean(
     query ||
-    [universityFilter, budgetFilter, cityFilter, languageFilter, requirementsFilter].some(
+    [universityFilter, budgetFilter, cityFilter, languageFilter, requirementsFilter, categoryFilter].some(
       (value) => value !== 'all',
     ),
   )
@@ -53,6 +52,7 @@ export default function MatchesPage({ admission }: { admission: Admission }) {
     setCityFilter('all')
     setLanguageFilter('all')
     setRequirementsFilter('all')
+    setCategoryFilter('all')
   }
   return (
     <>
@@ -66,23 +66,47 @@ export default function MatchesPage({ admission }: { admission: Admission }) {
           Изменить анкету
         </Link>
       </PageHeading>
+      <section className="panel ai-controls" aria-label="Подбор по профилю">
+        <p>
+          {admission.searchStale
+            ? 'Профиль изменился. Обновите подбор, когда закончите редактирование.'
+            : 'Подбор по сохранённой анкете. Фильтры уточняют результаты без повторного запроса.'}
+        </p>
+        <div className="button-row">
+          <button
+            className="button primary"
+            disabled={admission.recommendationsLoading || admission.searchAILoading}
+            onClick={admission.retryRecommendations}
+          >
+            Обновить подбор
+          </button>
+          <button
+            className="button secondary"
+            disabled={admission.recommendationsLoading || admission.searchAILoading}
+            onClick={admission.searchWithAI}
+          >
+            {admission.searchAILoading ? 'ИИ анализирует профиль…' : 'Подобрать с ИИ'}
+          </button>
+        </div>
+        {admission.searchAIMessage && <p role="status">{admission.searchAIMessage}</p>}
+        {admission.recommendationError && <p role="alert">{admission.recommendationError}</p>}
+      </section>
       <details className="panel search-profile-summary">
         <summary>Ваша анкета · проверьте или измените любой ответ</summary>
         <ProfileSummary admission={admission} compact />
       </details>
       <section className="match-controls panel" aria-label="Уточнить рекомендации">
         <label>
-          Главное направление
+          Категория программ
           <select
-            aria-label="Главное направление"
-            value={profile.interest}
-            onChange={(e) =>
-              admission.updateProfile({ interest: e.target.value as ApplicantProfile['interest'] })
-            }
+            aria-label="Категория программ"
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
           >
-            {interests.map((interest) => (
-              <option key={interest} value={interest}>
-                {ru(interest)}
+            <option value="all">Все направления</option>
+            {searchCategories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.label}
               </option>
             ))}
           </select>
@@ -106,6 +130,7 @@ export default function MatchesPage({ admission }: { admission: Admission }) {
           <input
             type="search"
             placeholder="Университет или программа"
+            aria-label="Поиск программы"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
@@ -168,7 +193,7 @@ export default function MatchesPage({ admission }: { admission: Admission }) {
             {[
               ...new Set(
                 programs
-                  .filter((program) => factApplies(program.language, profile))
+                  .filter((program) => !!program.language.value)
                   .map((program) => program.language.value!),
               ),
             ].map((language) => (

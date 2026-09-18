@@ -25,7 +25,7 @@ app.use('/api', (req, res) => {
     {
       method: req.method,
       headers: { ...req.headers, host: target.host },
-      timeout: 20000,
+      timeout: req.originalUrl.startsWith('/api/ai/') ? 75000 : 20000,
     },
     (upstream) => {
       res.writeHead(upstream.statusCode || 502, upstream.headers)

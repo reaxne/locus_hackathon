@@ -15,6 +15,9 @@ export interface BackendRequirement {
   source: BackendSource | null
 }
 export interface BackendTask {
+  how?: string[]
+  timing?: string
+  completionCriteria?: string
   id: string
   title: string
   description: string
@@ -29,6 +32,10 @@ export interface BackendTask {
   dependsOn: string[]
 }
 export interface BackendRecommendation {
+  city?: string | null
+  interests?: string[]
+  languages?: string[]
+  programGroup?: string | null
   universityId: string
   university: string
   programId: string
@@ -52,13 +59,22 @@ export interface BackendRecommendation {
   sources: Record<string, BackendSource>
 }
 export interface RecommendationResponse {
+  ai?: { status: 'generated' | 'unavailable'; reason?: string; cached: boolean }
+  coaching?: {
+    programs: {
+      program_id: string
+      explanation: string
+      steps: { task_id: string; why: string; how: string[]; suggested_timing: string }[]
+    }[]
+  }
   recommendations: BackendRecommendation[]
   warnings: string[]
   evaluatedAt: string
   matchingMethod: string
   excludedPrograms: { programId: string; reasons: string[] }[]
 }
-const taskId = (programId: string, id: string) => JSON.stringify([programId, id])
+const taskId = (programId: string, id: string) =>
+  JSON.stringify([id.startsWith('goal_') ? 'personal' : programId, id])
 export interface ServerMatch extends Recommendation {
   tasks: RoadmapTask[]
   completed: string[]
@@ -72,6 +88,7 @@ export function adaptRecommendations(response: RecommendationResponse): ServerMa
   if (!Array.isArray(response.recommendations) || !Array.isArray(response.warnings))
     throw new Error('Сервер вернул неверный формат рекомендаций.')
   return response.recommendations.map((item) => {
+    const advice = response.coaching?.programs.find((p) => p.program_id === item.programId)
     const fact = <T>(value: T | null, source?: BackendSource | null, verified = false): SourcedFact<T> => ({
       value,
       status: item.isDemo ? 'demo' : verified && value !== null ? 'verified' : 'unknown',
@@ -83,14 +100,14 @@ export function adaptRecommendations(response: RecommendationResponse): ServerMa
       (route) => route.route === item.eligibility.bestAdmissionRoute,
     )
     const requirements = route?.requirements ?? []
-    const application = item.roadmap.find((task) => task.id === 'apply_university')
+    const application = item.roadmap.find((task) => task.id.split(':')[0] === 'apply_university')
     const url =
       item.sources.name?.url ?? Object.values(item.sources)[0]?.url ?? application?.source?.url ?? ''
     const university: University = {
       id: item.universityId,
       name: item.university,
       shortName: item.university,
-      city: 'Не указан',
+      city: item.city ?? 'Не указан',
       country: 'Kazakhstan',
       sourceUrl: url,
     }
@@ -102,10 +119,18 @@ export function adaptRecommendations(response: RecommendationResponse): ServerMa
       code: null,
       interests: [],
       primaryInterest: null,
-      description: item.whyRecommended.join(' '),
+      description: [
+        ...(item.interests ?? []),
+        item.programGroup ?? '',
+        advice?.explanation ?? item.whyRecommended.join(' '),
+      ].join(' '),
       admissionsUrl: url,
       duration: fact<string>(null),
-      language: fact<string>(null),
+      language: fact(
+        item.languages?.length ? item.languages.join(', ') : null,
+        item.sources.languages,
+        !!item.sources.languages,
+      ),
       documents: fact<string[]>(null),
       tuition: fact(
         item.financial.tuitionPerYear,
@@ -135,12 +160,19 @@ export function adaptRecommendations(response: RecommendationResponse): ServerMa
       stage: task.id.startsWith('apply_') ? 'Apply' : 'Prepare',
       title: task.title,
       description: task.description,
-      why: task.reason,
-      timing: task.deadlineStatus === 'verified' && task.deadline ? task.deadline : 'Срок не указан',
+      why: advice?.steps.find((s) => s.task_id === task.id)?.why ?? task.reason,
+      timing:
+        task.deadlineStatus === 'verified' && task.deadline
+          ? task.deadline
+          : (task.timing ?? 'Срок не указан'),
       sourceUrl: task.source?.url ?? '',
       sourceLabel: 'Источник',
-      how: [task.description],
-      completionCriteria: task.target === null ? task.description : `Целевой результат: ${task.target}`,
+      how:
+        advice?.steps.find((s) => s.task_id === task.id)?.how ??
+        (task.how?.length ? task.how : [task.description]),
+      completionCriteria:
+        task.completionCriteria ??
+        (task.target === null ? task.description : `Целевой результат: ${task.target}`),
       programIds: [item.programId],
       deadlines: [
         {
@@ -161,14 +193,14 @@ export function adaptRecommendations(response: RecommendationResponse): ServerMa
           : item.financial.withinBudget === false
             ? 'Over budget'
             : 'Needs verification',
-      reasons: item.whyRecommended,
+      reasons: advice ? [advice.explanation, ...item.whyRecommended] : item.whyRecommended,
       caveats: item.warnings,
       completed: item.roadmap
         .filter((task) => task.status === 'completed')
         .map((task) => taskId(item.programId, task.id)),
       nextActionId: item.nextAction ? taskId(item.programId, item.nextAction.id) : null,
       ideas: item.roadmap
-        .filter((task) => task.id === 'portfolio_activity')
+        .filter((task) => task.id.split(':')[0] === 'portfolio_activity')
         .map((task) => ({
           id: taskId(item.programId, task.id),
           category: 'Personal Projects',

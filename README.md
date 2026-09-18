@@ -1,6 +1,30 @@
 # Locus frontend
 
-React + TypeScript + Vite frontend for the existing LocusBackend project (`C:/Python/LocusBackend` in this workspace). Backend source and configuration are not modified by this frontend integration.
+React + TypeScript + Vite frontend for the existing LocusBackend project (`C:/Users/Amir/PycharmProjects/LocusBackend`).
+
+## Обновление профиля, поиск и маршрут
+
+Ответы сохраняются без размонтирования страницы. Подбор вузов фиксируется до нажатия
+«Обновить подбор»: изменения профиля показывают подсказку об устаревшем подборе.
+Текстовый поиск и восемь категорий работают по уже загруженным результатам.
+«Подобрать с ИИ» добавляет персональные объяснения для шести лучших вариантов
+через `/ai/recommendations`; проверка требований и ранжирование остаются на сервере.
+
+Маршрут запрашивается отдельно через `/ai/roadmap` после сохранения анкеты
+(задержка 900 мс после последнего изменения). Базовый русский маршрут доступен без
+ИИ; «Дополнить маршрут с ИИ» включает подробные русские объяснения Gemma.
+При ограничении бесплатного провайдера базовые инструкции остаются доступны.
+Последующие изменения профиля обновляют включённые ИИ-советы в фоне.
+Прокси и браузер допускают длительность AI-запроса до 70–75 секунд.
+
+Личные экзаменационные цели создают шаги: пробный тест, запись результатов,
+выбор слабого раздела и практика. Личная дата не является дедлайном университета.
+Изменение экзамена сбрасывает отметки затронутых задач; остальные актуальные отметки
+сохраняются. Завершить можно только первый незавершённый шаг. Возврат раннего шага
+в «Запланировано» открывает заново последующие ручные отметки.
+Кнопка «Текущая цель» показывает инструкции и позволяет отметить шаг.
+В маршрут можно включить до шести программ. Отметки и выбранные программы пока
+хранятся только в памяти текущего сеанса, как и до этого обновления.
 
 ## Run
 
@@ -29,9 +53,9 @@ Production: `npm run build`, then `npm start`. The Node server serves the build 
 
 `src/lib/api.ts` sends cookies and the backend's browser security headers. Survey writes retain the existing fifteen-field `survey` payload plus the full `state` supported by LocusBackend. There are no credentials, tokens or profile snapshots in localStorage.
 
-`src/lib/profileSync.ts` serializes/coalesces questionnaire saves and handles revision conflicts. `src/hooks/useAdmission.ts` waits for the latest survey to be successfully saved before requesting recommendations. Failed saves block refresh; save retry also refreshes recommendations. Profile/account changes invalidate displayed results, and late responses are ignored. Recommendation failures have a retry action and never fall back to local recommendations. Account identity is checked again before displaying results.
+`src/lib/profileSync.ts` serializes/coalesces questionnaire saves and handles revision conflicts. `src/hooks/useAdmission.ts` waits for saved answers before refreshing results. Search results remain visible until explicit refresh; account switches clear them. Roadmap refreshes separately and ignores outdated responses. Failed saves block refresh. Account identity is checked again before displaying results.
 
-`src/lib/recommendations.ts` adapts the backend's camelCase response to the existing UI components. Server order, reasons, warnings, financial decisions, the best admission route, tasks, completion and next action are retained. Task IDs are namespaced by program to prevent collisions. Selecting programs filters the returned tasks; it does not generate new tasks or recalculate eligibility.
+`src/lib/recommendations.ts` adapts server responses and merges optional AI coaching by program/task IDs. Admission facts and ranking remain server-owned. Personal exam tasks are shared across programs. The first unfinished task defines the next action; the status handler prevents skipping ahead. Selecting saved programs requests a new backend roadmap for those IDs.
 
 Removed: local matching/ranking, local roadmap generation, personalized portfolio generation, the hardcoded university catalog, and unused localStorage migration logic. The frontend retains form validation, formatting, search/filter controls, comparison selection and other UI state. CSS and the visual layout are unchanged.
 

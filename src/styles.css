@@ -1,3 +1,47 @@
 @import './styles/app.css';
 @import './styles/planning.css';
 @import './styles/black.css';
+/* Current action remains available across profile, exams and university search. */
+.current-goal {
+  position: fixed;
+  right: 1.25rem;
+  bottom: 1.25rem;
+  z-index: 45;
+  display: grid;
+  justify-items: end;
+  gap: 0.75rem;
+}
+.current-goal-panel {
+  width: min(420px, calc(100vw - 2rem));
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 1.25rem;
+  box-shadow: 0 12px 40px #0003;
+}
+.current-goal-panel > .icon-button {
+  float: right;
+}
+.current-goal-panel h2 {
+  margin-top: 0.5rem;
+}
+.ai-controls {
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+}
+.task-status-control small {
+  display: block;
+}
+button:disabled,
+select:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+@media (max-width: 650px) {
+  .current-goal {
+    bottom: 0.75rem;
+    right: 0.75rem;
+  }
+  .site-footer {
+    padding-bottom: 6rem;
+  }
+}

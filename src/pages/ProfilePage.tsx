@@ -5,6 +5,7 @@ import ProfileSummary from '../components/ProfileSummary'
 import { examLabel } from '../lib/profile'
 import { goalExamNames } from '../types'
 import { Link } from '../lib/router'
+import ProfileInsights from '../components/ProfileInsights'
 
 export default function ProfilePage({ admission }: { admission: Admission }) {
   const p = admission.state.profile
@@ -19,10 +20,11 @@ export default function ProfilePage({ admission }: { admission: Admission }) {
       <PageHeading
         eyebrow="МОЙ ПРОФИЛЬ"
         title="Мой профиль"
-        description="Измените любой ответ — рекомендации и маршрут обновятся."
+        description="Ответы сохраняются автоматически. Маршрут обновится в фоне, а подбор вузов — по кнопке «Обновить подбор»."
         back="/roadmap"
       />
       {admission.state.isDemo && <Notice>Это пример анкеты. Измените ответы под свои планы.</Notice>}
+      <ProfileInsights admission={admission} />
       <section className="panel summary-panel">
         <div className="section-intro">
           <div>

@@ -1,11 +1,12 @@
 import { defineConfig, devices } from '@playwright/test'
+const port = Number(process.env.PLAYWRIGHT_PORT || 3100)
 
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
   workers: 4,
   reporter: 'list',
-  use: { baseURL: 'http://127.0.0.1:3100', headless: true, trace: 'retain-on-failure' },
+  use: { baseURL: `http://127.0.0.1:${port}`, headless: true, trace: 'retain-on-failure' },
   projects: [
     {
       name: 'desktop',
@@ -15,8 +16,8 @@ export default defineConfig({
   ],
   webServer: {
     command: 'npm start',
-    url: 'http://127.0.0.1:3100/health',
-    env: { PORT: '3100', API_UPSTREAM: 'http://127.0.0.1:8001' },
+    url: `http://127.0.0.1:${port}/health`,
+    env: { PORT: String(port), API_UPSTREAM: 'http://127.0.0.1:8001' },
     reuseExistingServer: false,
   },
 })

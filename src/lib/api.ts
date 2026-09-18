@@ -9,6 +9,21 @@ export interface Identity {
   displayName: string
   provider: 'email'
 }
+export interface ProfileAnalysisResponse {
+  ai: { status: 'generated' | 'unavailable'; model: string | null; cached: boolean; reason?: string }
+  analysis: {
+    strengths: ProfileInsight[]
+    weaknesses: ProfileInsight[]
+    unknowns: string[]
+  } | null
+}
+export interface ProfileInsight {
+  title: string
+  evidence: string
+  evidence_fields: string[]
+  why: string
+  actions: string[]
+}
 export interface RemoteProfile {
   userId: string
   profile: ApplicantProfile | null
@@ -39,7 +54,7 @@ export async function request<T>(path: string, method = 'GET', body?: unknown, u
         ...(userId ? { 'X-Locus-User': userId } : {}),
       },
       body: body === undefined ? undefined : JSON.stringify(body),
-      signal: AbortSignal.timeout(15000),
+      signal: AbortSignal.timeout(path.startsWith('/ai/') ? 70000 : 15000),
     })
   } catch {
     throw new ApiError(0, 'Сервер недоступен. Проверьте соединение и повторите сохранение.')
@@ -54,7 +69,7 @@ export async function request<T>(path: string, method = 'GET', body?: unknown, u
       422: path.startsWith('/auth')
         ? 'Имя: 3–50 латинских букв, цифр или _. Пароль: 8–128 символов.'
         : 'Сервер отклонил ответы анкеты. Проверьте значения полей.',
-      429: 'Слишком много попыток. Повторите через 15 минут.',
+      429: 'Запрос уже выполняется или действует ограничение. Повторите через 20 секунд.',
     }
     throw new ApiError(
       response.status,
@@ -148,6 +163,23 @@ function decode(data: SurveyEnvelope, userId: string): RemoteProfile {
   }
 }
 export const api = {
+  analyzeProfile: async (userId: string) => {
+    const response = await request<ProfileAnalysisResponse>('/ai/profile', 'POST', {}, userId)
+    if ((await me()).id !== userId) throw new ApiError(409, 'Аккаунт изменился. Войдите заново.')
+    return response
+  },
+  aiSearch: (userId: string, programIds: string[]) =>
+    request<RecommendationResponse>('/ai/recommendations', 'POST', { programIds, limit: 6 }, userId),
+  plan: async (userId: string, programIds: string[], generateAI = false) => {
+    const response = await request<RecommendationResponse>(
+      '/ai/roadmap',
+      'POST',
+      { programIds, limit: 3, generateAI },
+      userId,
+    )
+    if ((await me()).id !== userId) throw new ApiError(409, 'Аккаунт изменился. Войдите заново.')
+    return response
+  },
   recommendations: async (userId: string) => {
     const response = await request<RecommendationResponse>('/recommendations?limit=50')
     // Cookies are shared across tabs. Do not render another account's results.

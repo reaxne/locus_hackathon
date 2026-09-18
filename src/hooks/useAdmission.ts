@@ -5,6 +5,7 @@ import { questionIds } from '../lib/profile'
 import { api, ApiError, type Identity, type RemoteProfile } from '../lib/api'
 import { ProfileSync, type SaveStatus } from '../lib/profileSync'
 import type { ApplicantProfile, Theme, ListLabel, PlannedActivity } from '../types'
+import { currentTask, changeTaskStatus } from '../lib/taskProgress'
 
 export function useAdmission() {
   const [state, setState] = useState(initialState)
@@ -24,6 +25,12 @@ export function useAdmission() {
     )
       throw new Error('Сохранённый профиль имеет неверный формат. Обратитесь к администратору.')
     sync.current?.stop()
+    setRemoteMatches(null)
+    setRoadmapMatches([])
+    setRoadmapAI(false)
+    searchAIRequested.current = false
+    setSearchAILoading(false)
+    setSearchAIMessage('')
     const restored = {
       ...initialState(),
       profile: remote.profile,
@@ -117,15 +124,16 @@ export function useAdmission() {
   const [recommendationError, setRecommendationError] = useState('')
   const [recommendationWarnings, setRecommendationWarnings] = useState<string[]>([])
   const [recommendationAttempt, setRecommendationAttempt] = useState(0)
-  const recommendationKey = JSON.stringify([state.demoAccount, state.profile])
+  const searchAIRequested = useRef(false)
+  const [searchAIMessage, setSearchAIMessage] = useState('')
+  const [searchAILoading, setSearchAILoading] = useState(false)
+  const recommendationKey = JSON.stringify([state.demoAccount?.id, !!state.profile, recommendationAttempt])
+  const [searchProfile, setSearchProfile] = useState('')
   useEffect(() => {
     let cancelled = false
-    setRemoteMatches(null)
     setRecommendationError('')
     setRecommendationWarnings([])
     if (!state.demoAccount || !state.profile) return
-    // Session marks cannot establish completion for a changed server plan.
-    setState((old) => ({ ...old, completed: [], inProgress: [] }))
     void (async () => {
       try {
         // The autosave effect above schedules this profile before we flush it.
@@ -136,6 +144,7 @@ export function useAdmission() {
         const matches = adaptRecommendations(response)
         if (cancelled) return
         setRemoteMatches({ key: recommendationKey, matches })
+        setSearchProfile(JSON.stringify(state.profile))
         setRecommendationWarnings(response.warnings)
         const allowed = new Set(matches.map((match) => match.program.id))
         setState((old) => ({
@@ -143,18 +152,44 @@ export function useAdmission() {
           comparison: old.comparison.filter((id) => allowed.has(id)),
           focus: old.focus && allowed.has(old.focus) ? old.focus : null,
         }))
+        if (searchAIRequested.current && matches.length) {
+          searchAIRequested.current = false
+          setSearchAILoading(true)
+          const aiResponse = await api.aiSearch(
+            state.demoAccount!.id,
+            matches.slice(0, 6).map((m) => m.program.id),
+          )
+          if (cancelled) return
+          if ((await api.me()).id !== state.demoAccount!.id)
+            throw new Error('Аккаунт изменился. Войдите заново.')
+          if (aiResponse.ai?.status === 'generated') {
+            const enriched = new Map(adaptRecommendations(aiResponse).map((m) => [m.program.id, m]))
+            setRemoteMatches({
+              key: recommendationKey,
+              matches: matches.map((m) => enriched.get(m.program.id) ?? m),
+            })
+            setSearchAIMessage(
+              'ИИ объяснил соответствие шести лучших вариантов вашему профилю. Результаты сохранены до следующего обновления.',
+            )
+          } else setSearchAIMessage('ИИ временно недоступен. Подбор по анкете выполнен по данным каталога.')
+        }
       } catch (error) {
         if (!cancelled)
           setRecommendationError(
             error instanceof Error ? error.message : 'Не удалось загрузить рекомендации.',
           )
+      } finally {
+        if (!cancelled) setSearchAILoading(false)
       }
     })()
     return () => {
       cancelled = true
     }
   }, [recommendationKey, recommendationAttempt])
-  const recommendations = remoteMatches?.key === recommendationKey ? remoteMatches.matches : []
+  const recommendations =
+    state.demoAccount && remoteMatches && JSON.parse(remoteMatches.key)[0] === state.demoAccount.id
+      ? remoteMatches.matches
+      : []
   const recommendationsLoading =
     !!state.profile && !!state.demoAccount && remoteMatches?.key !== recommendationKey && !recommendationError
   const programs = recommendations.map((match) => match.program)
@@ -164,19 +199,74 @@ export function useAdmission() {
   const universityFor = (program: (typeof programs)[number]) =>
     universities.find((uni) => uni.id === program.universityId)!
   const focus = programs.find((p) => p.id === state.focus)
-  const selectedMatches = recommendations.filter(
-    (match) =>
-      state.focus === match.program.id ||
-      state.savedOptions.some((option) => option.programId === match.program.id),
-  )
-  const planMatches = selectedMatches.length ? selectedMatches : recommendations
-  const tasks = planMatches.flatMap((match) => match.tasks)
+  const [roadmapMatches, setRoadmapMatches] = useState<ServerMatch[]>([])
+  const [roadmapLoading, setRoadmapLoading] = useState(false)
+  const [roadmapMessage, setRoadmapMessage] = useState('')
+  const [roadmapAttempt, setRoadmapAttempt] = useState(0)
+  const [roadmapAI, setRoadmapAI] = useState(false)
+  const selectedIds = [
+    ...new Set([...state.savedOptions.map((o) => o.programId), ...(state.focus ? [state.focus] : [])]),
+  ]
+    .sort()
+    .slice(0, 6)
+  const roadmapKey = JSON.stringify([state.demoAccount?.id, state.profile, selectedIds])
+  const [loadedRoadmapKey, setLoadedRoadmapKey] = useState('')
+  useEffect(() => {
+    let cancelled = false
+    if (!state.profile || !state.demoAccount) {
+      setRoadmapMatches([])
+      return
+    }
+    setRoadmapLoading(true)
+    setRoadmapMessage('')
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        try {
+          await sync.current?.flush()
+          if (cancelled) return
+          const response = await api.plan(state.demoAccount!.id, selectedIds)
+          if (cancelled) return
+          const matches = adaptRecommendations(response)
+          setRoadmapMatches(matches)
+          setLoadedRoadmapKey(roadmapKey)
+          const valid = new Set(matches.flatMap((m) => m.tasks.map((t) => t.id)))
+          setState((old) => ({
+            ...old,
+            completed: old.completed.filter((id) => valid.has(id)),
+            inProgress: old.inProgress.filter((id) => valid.has(id)),
+          }))
+          if (roadmapAI) {
+            const aiResponse = await api.plan(state.demoAccount!.id, selectedIds, true)
+            if (cancelled) return
+            if (aiResponse.ai?.status === 'generated') {
+              setRoadmapMatches(adaptRecommendations(aiResponse))
+              setRoadmapMessage(
+                'ИИ дополнил маршрут подробными советами на русском. Проверяйте требования по официальным источникам.',
+              )
+            } else
+              setRoadmapMessage(
+                'ИИ сейчас недоступен. Показан подробный базовый маршрут на русском; можно повторить запрос позже.',
+              )
+          }
+        } catch (error) {
+          if (!cancelled)
+            setRoadmapMessage(error instanceof Error ? error.message : 'Не удалось обновить маршрут.')
+        } finally {
+          if (!cancelled) setRoadmapLoading(false)
+        }
+      })()
+    }, 900)
+    return () => {
+      cancelled = true
+      window.clearTimeout(timer)
+    }
+  }, [roadmapKey, roadmapAttempt, roadmapAI])
+  const planMatches = roadmapMatches
+  const tasks = [
+    ...new Map(planMatches.flatMap((match) => match.tasks).map((task) => [task.id, task])).values(),
+  ]
   const serverCompleted = planMatches.flatMap((match) => match.completed)
-  const nextTask = planMatches
-    .map((match) =>
-      tasks.find((task) => task.id === match.nextActionId && !state.completed.includes(task.id)),
-    )
-    .find(Boolean)
+  const nextTask = currentTask(tasks, state.completed, serverCompleted)
   const ideas = recommendations.flatMap((match) => match.ideas)
   function saveProfile(profile: ApplicantProfile, isDemo = false) {
     if (!validateProfile(profile)) return
@@ -190,7 +280,7 @@ export function useAdmission() {
         answeredQuestions: [...questionIds],
       }),
     )
-    setNotice('Сохраняем профиль и загружаем рекомендации.')
+    setNotice('Профиль сохраняется. Маршрут обновится в фоне; подбор вузов можно обновить отдельно.')
   }
   function updateProfile(patch: Partial<ApplicantProfile>) {
     setState((old) => (old.profile ? applyProfile(old, { ...old.profile, ...patch }) : old))
@@ -211,6 +301,10 @@ export function useAdmission() {
   }
   function chooseFocus(id: string) {
     if (!programs.some((program) => program.id === id)) return
+    if (!state.savedOptions.some((o) => o.programId === id) && state.savedOptions.length >= 6) {
+      setNotice('В маршрут можно включить до шести программ. Сначала уберите одну из списка.')
+      return
+    }
     setState((old) =>
       reconcile({
         ...old,
@@ -226,16 +320,20 @@ export function useAdmission() {
     setTaskStatus(id, state.completed.includes(id) ? 'planned' : 'completed')
   }
   function setTaskStatus(id: string, status: 'planned' | 'in-progress' | 'completed') {
+    if (loadedRoadmapKey !== roadmapKey || roadmapLoading) return
     setState((old) =>
       reconcile({
         ...old,
-        completed: [...old.completed.filter((v) => v !== id), ...(status === 'completed' ? [id] : [])],
-        inProgress: [...old.inProgress.filter((v) => v !== id), ...(status === 'in-progress' ? [id] : [])],
+        ...changeTaskStatus(tasks, old.completed, old.inProgress, serverCompleted, id, status),
       }),
     )
   }
   function saveOption(programId: string, label: ListLabel) {
     if (!programs.some((program) => program.id === programId)) return
+    if (!state.savedOptions.some((o) => o.programId === programId) && state.savedOptions.length >= 6) {
+      setNotice('В маршрут можно включить до шести программ. Уберите одну из списка, чтобы добавить новую.')
+      return
+    }
     setState((old) =>
       reconcile({
         ...old,
@@ -311,6 +409,11 @@ export function useAdmission() {
   }
   return {
     state,
+    analyzeProfile: async () => {
+      if (!state.demoAccount) throw new Error('Войдите в аккаунт.')
+      await sync.current?.flush()
+      return api.analyzeProfile(state.demoAccount.id)
+    },
     loading,
     saveStatus,
     saveError,
@@ -333,6 +436,20 @@ export function useAdmission() {
     setNotice,
     dark,
     recommendations,
+    searchStale: searchProfile !== JSON.stringify(state.profile),
+    searchAIMessage,
+    searchAILoading,
+    searchWithAI: () => {
+      searchAIRequested.current = true
+      setRecommendationAttempt((v) => v + 1)
+    },
+    roadmapLoading,
+    roadmapMessage,
+    roadmapCurrent: loadedRoadmapKey === roadmapKey && !roadmapLoading,
+    generateAIRoadmap: () => {
+      setRoadmapAI(true)
+      setRoadmapAttempt((v) => v + 1)
+    },
     recommendationsLoading,
     recommendationError,
     recommendationWarnings,

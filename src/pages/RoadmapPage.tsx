@@ -43,6 +43,19 @@ export default function RoadmapPage({ admission }: { admission: Admission }) {
           Изменить профиль
         </Link>
       </PageHeading>
+      <div className="panel ai-controls">
+        <p>
+          Цели выполняются по порядку. Изменения экзаменов обновляют маршрут автоматически после сохранения.
+        </p>
+        <button
+          className="button secondary"
+          disabled={admission.roadmapLoading}
+          onClick={admission.generateAIRoadmap}
+        >
+          {admission.roadmapLoading ? 'Обновляем маршрут…' : 'Дополнить маршрут с ИИ'}
+        </button>
+        {admission.roadmapMessage && <p role="status">{admission.roadmapMessage}</p>}
+      </div>
       <section className="route-overview" aria-label="Обзор подготовки">
         <div className="route-stat">
           <span className="small-label">ТВОЙ ПРОФИЛЬ</span>
@@ -160,7 +173,9 @@ export default function RoadmapPage({ admission }: { admission: Admission }) {
                   task={task}
                   admission={admission}
                   onComplete={
-                    status === 'completed' ? undefined : () => admission.setTaskStatus(task.id, 'completed')
+                    next?.id === task.id && admission.roadmapCurrent
+                      ? () => admission.setTaskStatus(task.id, 'completed')
+                      : undefined
                   }
                 />
                 <label className="task-status-control">
@@ -168,6 +183,11 @@ export default function RoadmapPage({ admission }: { admission: Admission }) {
                   <select
                     aria-label={`Статус: ${task.title}`}
                     value={status}
+                    disabled={
+                      !admission.roadmapCurrent ||
+                      admission.serverCompleted.includes(task.id) ||
+                      (next?.id !== task.id && status !== 'completed')
+                    }
                     onChange={(event) =>
                       admission.setTaskStatus(
                         task.id,
@@ -179,6 +199,9 @@ export default function RoadmapPage({ admission }: { admission: Admission }) {
                     <option value="in-progress">В работе</option>
                     <option value="completed">Готово</option>
                   </select>
+                  {status !== 'completed' && next?.id !== task.id && (
+                    <small>Сначала выполните предыдущий шаг</small>
+                  )}
                 </label>
               </article>
             </li>

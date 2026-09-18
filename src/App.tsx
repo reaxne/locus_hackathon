@@ -16,6 +16,7 @@ import UniversityListPage from './pages/UniversityListPage'
 import PortfolioPage from './pages/PortfolioPage'
 import ExamGoalsPage from './pages/ExamGoalsPage'
 import AnalysisPage from './pages/AnalysisPage'
+import CurrentGoal from './components/CurrentGoal'
 
 const titles: Record<string, string> = {
   '/': 'План поступления',
@@ -63,10 +64,10 @@ export default function App() {
           Ваши ответы и текущий шаг сохранены. Завершите анкету, чтобы увидеть рекомендации.
         </Empty>
       )
-    const needsRecommendations = !['/profile', '/exam-goals'].includes(path)
-    if (needsRecommendations && admission.recommendationsLoading)
+    const needsRecommendations = ['/universities', '/matches', '/analysis', '/recommendations'].includes(path)
+    if (needsRecommendations && admission.recommendationsLoading && !admission.recommendations.length)
       return <p role="status">Загружаем рекомендации и маршрут…</p>
-    if (needsRecommendations && admission.recommendationError)
+    if (needsRecommendations && admission.recommendationError && !admission.recommendations.length)
       return (
         <div className="storage-warning" role="alert">
           {admission.recommendationError}
@@ -193,6 +194,7 @@ export default function App() {
         </div>
         <Link href="/sources">Источники и методика</Link>
       </footer>
+      {authenticated && state.profile && <CurrentGoal admission={admission} />}
       {admission.notice && (
         <div className="toast" role="status">
           <Check size={18} />

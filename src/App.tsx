@@ -41,6 +41,7 @@ export default function App() {
   const admission = useAdmission()
   const { state } = admission
   const { path, go } = useRouter()
+  const activeNavPath = path === '/matches' ? '/universities' : path
   const publicPage = ['/', '/register', '/sign-in', '/sources'].includes(path)
   const authenticated = !!state.demoSession && !!state.demoAccount
   useEffect(() => {
@@ -167,7 +168,7 @@ export default function App() {
               ]
             : [['/diagnosis', 'Анкета']]
           ).map(([href, label]) => (
-            <Link key={href} href={href} aria-current={path === href ? 'page' : undefined}>
+            <Link key={href} href={href} aria-current={activeNavPath === href ? 'page' : undefined}>
               {label}
             </Link>
           ))}

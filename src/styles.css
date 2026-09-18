@@ -1,3 +1,4 @@
+@import './styles/typography.css';
 @import './styles/app.css';
 @import './styles/planning.css';
 @import './styles/black.css';
@@ -10,7 +11,7 @@
   margin-block: 1rem;
 }
 .loading-state h2 {
-  font-size: clamp(1.2rem, 4vw, 1.7rem);
+  font-size: var(--font-size-loading-title);
   margin: 0 0 0.75rem;
 }
 .loading-state p {
@@ -79,7 +80,7 @@ textarea {
   input,
   select,
   textarea {
-    font-size: 16px;
+    font-size: var(--font-size-lead);
   }
   .header-inner {
     flex-wrap: wrap;

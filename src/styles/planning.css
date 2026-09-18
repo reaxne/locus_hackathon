@@ -1,5 +1,5 @@
 .header-dashboard {
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
   font-weight: 650;
   border-left: 1px solid var(--border);
   padding-left: 18px;
@@ -15,7 +15,7 @@
 }
 .workspace-nav a,
 .workspace-nav button {
-  font-size: 11px;
+  font-size: var(--font-size-small);
   border: 0;
   border-radius: 6px;
   padding: 11px 13px;
@@ -43,7 +43,7 @@
   margin-bottom: 28px;
 }
 .diagnosis-intro > p {
-  font-size: 13px;
+  font-size: var(--font-size-body);
   color: var(--muted);
   margin-top: 12px;
 }
@@ -62,7 +62,7 @@
   gap: 15px;
   align-items: center;
   padding: 21px 30px;
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   color: var(--muted);
 }
 .question-progress > span:last-child {
@@ -80,7 +80,7 @@
   padding: 38px 35px;
 }
 .question-body h1 {
-  font-size: 32px;
+  font-size: var(--font-size-title-xl);
   letter-spacing: -1px;
   line-height: 1.3;
 }
@@ -89,7 +89,7 @@
 }
 .question-body > p {
   color: var(--muted);
-  font-size: 13px;
+  font-size: var(--font-size-body);
   margin: 14px 0 27px;
 }
 .question-choices {
@@ -115,7 +115,7 @@
   border-color: var(--primary);
 }
 .answer-choice strong {
-  font-size: 13px;
+  font-size: var(--font-size-body);
   font-weight: 650;
 }
 .answer-choice svg {
@@ -124,14 +124,14 @@
 .answer-choice small {
   display: block;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   margin-top: 5px;
 }
 .question-body form > label {
   max-width: 400px;
 }
 .question-body input[type='number'] {
-  font-size: 20px;
+  font-size: var(--font-size-title-sm);
   padding: 17px;
 }
 .question-continue {
@@ -144,7 +144,7 @@
   justify-content: space-between;
   align-items: center;
   gap: 15px;
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   color: var(--muted);
 }
 .question-aside {
@@ -155,12 +155,12 @@
   margin-bottom: 20px;
 }
 .question-aside h2 {
-  font-size: 24px;
+  font-size: var(--font-size-title-md);
   line-height: 1.4;
 }
 .question-aside > p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
   margin-top: 13px;
 }
 .saved-indicator {
@@ -168,7 +168,7 @@
   align-items: center;
   gap: 6px;
   color: var(--primary);
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   margin-top: 25px;
 }
 .multi-choices {
@@ -187,7 +187,7 @@
   border: 1px solid var(--border);
   border-radius: 9px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
   background: var(--surface);
 }
 .multi-choices .selected,
@@ -200,7 +200,7 @@
   margin-bottom: 25px;
 }
 .summary-panel > p {
-  font-size: 11px;
+  font-size: var(--font-size-small);
   margin-top: 20px;
 }
 .profile-summary {
@@ -216,11 +216,11 @@
   min-width: 0;
 }
 .profile-summary dt {
-  font-size: 9px;
+  font-size: var(--font-size-caption);
   margin-bottom: 7px;
 }
 .profile-summary dd {
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
   overflow-wrap: anywhere;
 }
 .profile-summary button {
@@ -246,14 +246,14 @@
   border-radius: 9px;
 }
 .profile-goals strong {
-  font-size: 14px;
+  font-size: var(--font-size-body);
 }
 .profile-goals span {
-  font-size: 11px;
+  font-size: var(--font-size-small);
   color: var(--muted);
 }
 .profile-goals small {
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   color: var(--muted);
 }
 .search-profile-summary {
@@ -274,7 +274,7 @@
   flex: 1;
   min-width: 180px;
   max-width: 360px;
-  font-size: 11px;
+  font-size: var(--font-size-small);
 }
 .search-filters .text-button {
   margin-bottom: 4px;
@@ -288,7 +288,7 @@
 }
 .save-option label {
   flex: 1;
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   min-width: 0;
 }
 .save-option label > span {
@@ -297,7 +297,7 @@
   gap: 6px;
 }
 .save-option select {
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
 }
 .save-option > .icon-button {
   margin-bottom: 3px;
@@ -321,11 +321,11 @@
   margin: 30px 0;
 }
 .dashboard-invitation h2 {
-  font-size: 23px;
+  font-size: var(--font-size-title-md);
   margin: 10px 0;
 }
 .dashboard-invitation p {
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
   color: var(--muted);
 }
 .dashboard-invitation .button {
@@ -346,7 +346,7 @@
 }
 .details-intro > small {
   display: block;
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   margin-top: 9px;
 }
 .detail-reasons {
@@ -359,7 +359,7 @@
   padding: 24px;
 }
 .detail-reasons h2 {
-  font-size: 18px;
+  font-size: var(--font-size-title-xs);
   margin-bottom: 13px;
 }
 .details-facts {
@@ -379,11 +379,11 @@
   padding: 23px 0;
 }
 .details-fact-grid h3 {
-  font-size: 13px;
+  font-size: var(--font-size-body);
   margin-bottom: 14px;
 }
 .details-fact-grid p {
-  font-size: 11px;
+  font-size: var(--font-size-small);
   color: var(--muted);
   margin: 12px 0;
 }
@@ -393,11 +393,11 @@
   padding: 24px;
 }
 .details-save h2 {
-  font-size: 23px;
+  font-size: var(--font-size-title-md);
   margin: 11px 0;
 }
 .details-save > p {
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
   color: var(--muted);
   margin-bottom: 20px;
 }
@@ -411,7 +411,7 @@
 }
 .details-save > a:last-child {
   display: block;
-  font-size: 11px;
+  font-size: var(--font-size-small);
   text-align: center;
 }
 .portfolio-examples {
@@ -422,7 +422,7 @@
 }
 .portfolio-examples p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
 }
 .portfolio-examples > article {
   border-top: 1px solid var(--border);
@@ -430,13 +430,13 @@
   padding-top: 22px;
 }
 .portfolio-examples h3 {
-  font-size: 15px;
+  font-size: var(--font-size-body-lg);
   margin-bottom: 12px;
 }
 .portfolio-examples small {
   display: block;
   color: var(--primary);
-  font-size: 11px;
+  font-size: var(--font-size-small);
   margin-top: 12px;
 }
 .portfolio-examples > .text-button {
@@ -455,13 +455,13 @@
   padding: 24px;
 }
 .saved-program h2 {
-  font-size: 21px;
+  font-size: var(--font-size-title-sm);
 }
 .saved-program h2 a {
   color: var(--text);
 }
 .saved-program > p.muted {
-  font-size: 11px;
+  font-size: var(--font-size-small);
   margin: 12px 0;
 }
 .saved-program .button-row {
@@ -470,15 +470,15 @@
   justify-content: space-between;
 }
 .saved-program .button {
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   padding: 10px 13px;
 }
 .saved-program > .text-button {
-  font-size: 11px;
+  font-size: var(--font-size-small);
 }
 .saved-program .info-note {
   margin-top: 18px;
-  font-size: 10px;
+  font-size: var(--font-size-caption);
 }
 .sign-in-layout {
   display: grid;
@@ -493,18 +493,18 @@
   padding: 40px;
 }
 .sign-in-panel h1 {
-  font-size: 36px;
+  font-size: var(--font-size-title-2xl);
   margin: 4px 0 4px;
 }
 .sign-in-panel > p {
-  font-size: 13px;
+  font-size: var(--font-size-body);
   color: var(--muted);
 }
 .sign-in-panel form {
   margin: 28px 0;
 }
 .sign-in-panel label > .muted {
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   margin-top: -5px;
 }
 .sign-in-panel form > .button {
@@ -512,19 +512,19 @@
   margin-top: 20px;
 }
 .sign-in-panel .info-note {
-  font-size: 11px;
+  font-size: var(--font-size-small);
   margin-bottom: 20px;
 }
 .sign-in-panel > a {
-  font-size: 11px;
+  font-size: var(--font-size-small);
 }
 .sign-in-layout aside > h2 {
-  font-size: 33px;
+  font-size: var(--font-size-title-xl);
   line-height: 1.4;
   margin: 20px 0;
 }
 .sign-in-layout aside > p {
-  font-size: 13px;
+  font-size: var(--font-size-body);
   color: var(--muted);
   margin-bottom: 20px;
 }
@@ -541,19 +541,19 @@
   border-radius: 13px;
 }
 .dashboard-next h2 {
-  font-size: 29px;
+  font-size: var(--font-size-title-xl);
   margin: 20px 0 16px;
   max-width: 590px;
 }
 .dashboard-next > p {
-  font-size: 13px;
+  font-size: var(--font-size-body);
   color: var(--muted);
   max-width: 580px;
 }
 .next-timing {
   display: block;
   margin: 15px 0 23px;
-  font-size: 11px;
+  font-size: var(--font-size-small);
   color: var(--primary);
 }
 .dashboard-next .button-row {
@@ -566,16 +566,16 @@
   padding: 30px;
 }
 .dashboard-progress h2 {
-  font-size: 46px;
+  font-size: var(--font-size-display-md);
   margin: 17px 0 3px;
 }
 .dashboard-progress h2 > span {
-  font-size: 24px;
+  font-size: var(--font-size-title-md);
   color: var(--muted);
   font-weight: 500;
 }
 .dashboard-progress > p {
-  font-size: 11px;
+  font-size: var(--font-size-small);
   color: var(--muted);
 }
 .dashboard-progress > progress {
@@ -588,11 +588,11 @@
   gap: 15px;
   padding: 12px 0;
   border-top: 1px solid var(--border);
-  font-size: 11px;
+  font-size: var(--font-size-small);
   color: var(--muted);
 }
 .dashboard-stat strong {
-  font-size: 15px;
+  font-size: var(--font-size-body-lg);
   color: var(--text);
 }
 .dashboard-links {
@@ -619,11 +619,11 @@
   margin-bottom: 20px;
 }
 .dashboard-link h3 {
-  font-size: 18px;
+  font-size: var(--font-size-title-xs);
   margin-bottom: 10px;
 }
 .dashboard-link p {
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
   color: var(--muted);
   padding-right: 10px;
 }
@@ -637,11 +637,11 @@
   margin-bottom: 33px;
 }
 .portfolio-preferences h2 {
-  font-size: 21px;
+  font-size: var(--font-size-title-sm);
   margin-bottom: 12px;
 }
 .portfolio-preferences p {
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
   color: var(--muted);
 }
 .category-chips {
@@ -652,7 +652,7 @@
 }
 .category-chips > label {
   padding: 12px 16px;
-  font-size: 11px;
+  font-size: var(--font-size-small);
 }
 .activity-ideas {
   display: grid;
@@ -666,13 +666,13 @@
   align-items: flex-start;
 }
 .activity-idea h3 {
-  font-size: 19px;
+  font-size: var(--font-size-title-sm);
   line-height: 1.5;
   margin: 18px 0 12px;
 }
 .activity-idea > p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
 }
 .activity-outcome {
   border-top: 1px solid var(--border);
@@ -680,12 +680,12 @@
   margin-top: 21px;
 }
 .activity-outcome p {
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
   line-height: 1.8;
   margin-top: 9px;
 }
 .activity-idea > small {
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   color: var(--muted);
   margin: 20px 0;
 }
@@ -698,7 +698,7 @@
   margin: 28px 0 40px;
 }
 .custom-activity h2 {
-  font-size: 22px;
+  font-size: var(--font-size-title-md);
 }
 .custom-activity-fields {
   display: grid;
@@ -720,7 +720,7 @@
 }
 .planned-activity > p {
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
   margin-top: 14px;
 }
 .planned-activity .form-grid {
@@ -728,7 +728,7 @@
   gap: 15px;
 }
 .planned-activity h3 {
-  font-size: 19px;
+  font-size: var(--font-size-title-sm);
 }
 .exam-goals-grid {
   display: grid;
@@ -742,7 +742,7 @@
   margin-bottom: 16px;
 }
 .exam-goal-card > p {
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
   color: var(--muted);
   margin-bottom: 24px;
 }
@@ -757,7 +757,7 @@
   margin: 23px 0 20px;
 }
 .exam-save-row > span {
-  font-size: 11px;
+  font-size: var(--font-size-small);
   display: flex;
   align-items: center;
   gap: 5px;
@@ -766,7 +766,7 @@
 .current-goal-note {
   display: block;
   color: var(--muted);
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   margin-top: 12px;
 }
 .section-scores {
@@ -774,10 +774,10 @@
   margin-top: 28px;
 }
 .section-scores h2 {
-  font-size: 23px;
+  font-size: var(--font-size-title-md);
 }
 .section-scores > p {
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
   color: var(--muted);
   margin: 14px 0 23px;
 }
@@ -788,12 +788,12 @@
   margin-bottom: 23px;
 }
 .section-scores form > p {
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
   margin-top: 15px;
   color: var(--primary);
 }
 .aet-note {
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
   color: var(--muted);
   margin-top: 25px;
 }
@@ -803,16 +803,16 @@
   width: 100%;
 }
 .task-details summary {
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   color: var(--primary);
   padding: 13px 0;
 }
 .task-details h4 {
-  font-size: 11px;
+  font-size: var(--font-size-small);
   margin: 12px 0 8px;
 }
 .task-details ol {
-  font-size: 11px;
+  font-size: var(--font-size-small);
   color: var(--muted);
   padding-left: 18px;
   line-height: 1.9;
@@ -821,7 +821,7 @@
 .task-details .text-button {
   display: block;
   width: fit-content;
-  font-size: 11px;
+  font-size: var(--font-size-small);
   margin-top: 8px;
 }
 .task-card > div {
@@ -833,26 +833,26 @@
   margin: 10px 0;
 }
 .next-action > .external {
-  font-size: 10px;
+  font-size: var(--font-size-caption);
   margin-top: 10px;
 }
 .next-action > .text-button {
-  font-size: 11px;
+  font-size: var(--font-size-small);
 }
 .plan-inputs {
   padding: 24px;
   margin-bottom: 24px;
 }
 .plan-inputs > strong {
-  font-size: 14px;
+  font-size: var(--font-size-body);
 }
 .plan-inputs > p {
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
   color: var(--muted);
   margin: 10px 0;
 }
 .plan-inputs > a {
-  font-size: 12px;
+  font-size: var(--font-size-secondary);
 }
 @media (max-width: 1100px) {
   .question-layout {
@@ -931,7 +931,7 @@
     padding: 25px;
   }
   .dashboard-next h2 {
-    font-size: 25px;
+    font-size: var(--font-size-title-lg);
   }
   .dashboard-progress {
     padding: 25px;
@@ -994,7 +994,7 @@
     gap: 13px;
   }
   .header-dashboard {
-    font-size: 10px;
+    font-size: var(--font-size-caption);
     padding-left: 10px;
   }
   .search-filters label {
@@ -1026,7 +1026,7 @@
   }
   .workspace-nav a,
   .workspace-nav button {
-    font-size: 10px;
+    font-size: var(--font-size-caption);
     padding: 9px;
     min-height: 37px;
   }
@@ -1034,11 +1034,11 @@
     padding: 27px 0;
   }
   .diagnosis-intro > p {
-    font-size: 12px;
+    font-size: var(--font-size-secondary);
   }
   .question-progress {
     padding: 17px 18px;
-    font-size: 9px;
+    font-size: var(--font-size-caption);
     gap: 9px;
   }
   .question-progress > span:last-child {
@@ -1049,10 +1049,10 @@
     padding: 27px 20px;
   }
   .question-body h1 {
-    font-size: 27px;
+    font-size: var(--font-size-title-lg);
   }
   .question-body > p {
-    font-size: 12px;
+    font-size: var(--font-size-secondary);
     margin-bottom: 24px;
   }
   .question-choices {
@@ -1064,15 +1064,15 @@
     min-height: 58px;
   }
   .answer-choice strong {
-    font-size: 12px;
+    font-size: var(--font-size-secondary);
   }
   .question-footer {
     padding: 16px 20px;
-    font-size: 9px;
+    font-size: var(--font-size-caption);
     gap: 8px;
   }
   .question-footer .text-button {
-    font-size: 11px;
+    font-size: var(--font-size-small);
   }
   .multi-choices {
     grid-template-columns: 1fr;
@@ -1097,7 +1097,7 @@
     padding: 15px;
   }
   .profile-goals small {
-    font-size: 9px;
+    font-size: var(--font-size-caption);
   }
   .summary-panel > .section-intro > .button {
     margin-top: 18px;
@@ -1107,13 +1107,13 @@
   }
   .search-filters label {
     min-width: 100%;
-    font-size: 11px;
+    font-size: var(--font-size-small);
   }
   .dashboard-invitation {
     padding: 23px;
   }
   .dashboard-invitation h2 {
-    font-size: 23px;
+    font-size: var(--font-size-title-md);
   }
   .dashboard-invitation > .button {
     width: 100%;
@@ -1146,7 +1146,7 @@
     padding: 23px;
   }
   .saved-program h2 {
-    font-size: 22px;
+    font-size: var(--font-size-title-md);
   }
   .list-filter {
     max-width: none;
@@ -1158,7 +1158,7 @@
     padding: 26px 22px;
   }
   .sign-in-panel h1 {
-    font-size: 31px;
+    font-size: var(--font-size-title-xl);
   }
   .dashboard-top {
     grid-template-columns: 1fr;
@@ -1169,7 +1169,7 @@
     padding: 26px 23px;
   }
   .dashboard-next h2 {
-    font-size: 26px;
+    font-size: var(--font-size-title-lg);
   }
   .dashboard-links {
     grid-template-columns: 1fr;
@@ -1182,7 +1182,7 @@
     margin-bottom: 16px;
   }
   .dashboard-link p {
-    font-size: 12px;
+    font-size: var(--font-size-secondary);
   }
   .portfolio-preferences {
     padding: 23px;
@@ -1192,7 +1192,7 @@
   }
   .category-chips > label {
     padding: 12px 10px;
-    font-size: 10px;
+    font-size: var(--font-size-caption);
     gap: 6px;
   }
   .activity-ideas {
@@ -1232,11 +1232,11 @@
     gap: 12px;
   }
   .exam-goal-card input {
-    font-size: 12px;
+    font-size: var(--font-size-secondary);
     padding: 11px 9px;
   }
   .exam-goal-card label small {
-    font-size: 10px;
+    font-size: var(--font-size-caption);
   }
   .section-scores {
     padding: 24px;
@@ -1246,10 +1246,10 @@
     gap: 17px;
   }
   .section-scores > h2 {
-    font-size: 21px;
+    font-size: var(--font-size-title-sm);
   }
   .task-details summary {
-    font-size: 10px;
+    font-size: var(--font-size-caption);
     line-height: 1.8;
   }
   .task-details .external {
@@ -1259,12 +1259,12 @@
     margin-bottom: 15px;
   }
   .search-profile-summary > summary {
-    font-size: 11px;
+    font-size: var(--font-size-small);
   }
   .summary-panel .section-intro h2 {
-    font-size: 21px;
+    font-size: var(--font-size-title-sm);
   }
   .plan-inputs > strong {
-    font-size: 13px;
+    font-size: var(--font-size-body);
   }
 }

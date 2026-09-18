@@ -68,7 +68,7 @@ export default function DiagnosisPage({ admission }: { admission: Admission }) {
   const [error, setError] = useState('')
   const [numberInput, setNumberInput] = useState('')
   const [scoreInput, setScoreInput] = useState('')
-  const [examStatus, setExamStatus] = useState<ExamStatus>('unknown')
+  const [examStatus, setExamStatus] = useState<ExamStatus | ''>('')
   const heading = useRef<HTMLHeadingElement>(null)
   const exam = ['SAT', 'IELTS', 'NUET', 'UNT', 'AET'].includes(question) ? (question as ExamName) : null
   useEffect(() => {
@@ -262,7 +262,7 @@ export default function DiagnosisPage({ admission }: { admission: Admission }) {
                       key={status}
                       type="button"
                       aria-pressed={examStatus === status}
-                      className={`answer-choice ${examStatus === status ? 'selected' : ''}`}
+                      className={`answer-choice`}
                       onClick={() => {
                         setExamStatus(status)
                         const value: Partial<ApplicantProfile> = {
@@ -407,17 +407,6 @@ export default function DiagnosisPage({ admission }: { admission: Admission }) {
                   {continueLabel}
                   <ArrowRight size={18} />
                 </button>
-                {(multiple || question === 'constraints') && (
-                  <button
-                    className="text-button"
-                    type="button"
-                    onClick={() =>
-                      answer(question === 'constraints' ? { constraints: '' } : { [question]: [] })
-                    }
-                  >
-                    Пропустить
-                  </button>
-                )}
               </form>
             )}
             {error && (

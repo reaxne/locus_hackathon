@@ -7,7 +7,20 @@ export interface SourcedFact<T> {
   admissionCycle: string | null
   scope?: 'all' | 'domestic' | 'international'
 }
-export const interests = ['Software engineering', 'AI & data', 'Cybersecurity'] as const
+export const interests = [
+  'Software engineering',
+  'AI & data',
+  'Cybersecurity',
+  'Инженерия и технологии',
+  'Медицина и здравоохранение',
+  'Экономика и бизнес',
+  'Право',
+  'Естественные науки',
+  'Гуманитарные науки',
+  'Педагогика и образование',
+  'Архитектура и строительство',
+  'Искусство и дизайн'
+] as const
 export type Interest = (typeof interests)[number]
 export const examNames = ['UNT', 'SAT', 'IELTS', 'NUET', 'AET'] as const
 export type ExamName = (typeof examNames)[number]

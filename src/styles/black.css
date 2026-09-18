@@ -134,11 +134,6 @@ select,
   background: var(--tint);
   color: var(--primary);
 }
-.notice,
-.transparency-strip {
-  background: var(--soft);
-  border-color: var(--border);
-}
 .notice {
   color: var(--muted);
 }
@@ -169,10 +164,6 @@ select,
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 34px;
-}
-.hero-assurance {
-  flex-wrap: wrap;
-  gap: 12px 20px;
 }
 .landing-map {
   border: 1px solid var(--border);
@@ -287,23 +278,6 @@ select,
 }
 .feature p {
   font-size: 13px;
-}
-.transparency-strip {
-  margin-top: 38px;
-}
-.landing-bottom {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 24px;
-  border-top: 1px solid var(--border);
-  margin-top: 65px;
-  padding: 49px 0 18px;
-}
-.landing-bottom h2 {
-  font-size: 36px;
-  line-height: 1.2;
-  margin-top: 15px;
 }
 .route-overview {
   display: grid;
@@ -742,9 +716,6 @@ select,
     padding: 22px;
     min-height: 435px;
   }
-  .hero-assurance {
-    font-size: 10px;
-  }
   .route-next {
     grid-template-columns: auto 1fr;
   }
@@ -783,9 +754,6 @@ select,
   }
   .feature-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-  .landing-bottom h2 {
-    font-size: 29px;
   }
   .route-overview {
     grid-template-columns: 1fr;
@@ -861,12 +829,6 @@ select,
   }
   .landing-copy .hero-actions .button {
     justify-content: center;
-  }
-  .landing-bottom {
-    display: block;
-  }
-  .landing-bottom .button {
-    margin-top: 25px;
   }
   .landing-map {
     padding: 18px;

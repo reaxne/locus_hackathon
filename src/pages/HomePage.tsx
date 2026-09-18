@@ -1,4 +1,4 @@
-import { ArrowRight, ArrowUpRight, Check, Fingerprint, ListChecks, Search, ShieldCheck } from 'lucide-react'
+import { ArrowRight, ArrowUpRight} from 'lucide-react'
 import { Link } from '../lib/router'
 import type { Admission } from '../hooks/useAdmission'
 
@@ -11,7 +11,7 @@ export default function HomePage(_props: { admission: Admission }) {
             <span className="status-dot" /> ДЛЯ УЧЕНИКОВ 9–12 КЛАССОВ
           </div>
           <h1>
-            Твоё будущее в IT.
+            Твоё будущее.
             <br />
             <span>Твой маршрут.</span>
           </h1>
@@ -26,14 +26,6 @@ export default function HomePage(_props: { admission: Admission }) {
             <Link className="button secondary large" href="/sign-in">
               Войти <ArrowUpRight size={18} />
             </Link>
-          </div>
-          <div className="hero-assurance">
-            <span>
-              <Check size={15} /> Под твои интересы и бюджет
-            </span>
-            <span>
-              <Check size={15} /> В твоём темпе
-            </span>
           </div>
         </div>
         <div
@@ -74,88 +66,6 @@ export default function HomePage(_props: { admission: Admission }) {
             </span>
           </div>
         </div>
-      </section>
-      <section className="journey-overview" aria-labelledby="journey-title">
-        <div className="section-intro">
-          <div>
-            <div className="eyebrow">КАК ЭТО РАБОТАЕТ</div>
-            <h2 id="journey-title">
-              Не всё сразу.
-              <br />
-              Один шаг за другим.
-            </h2>
-          </div>
-          <p>
-            Ты выбираешь направление.
-            <br />
-            Мы помогаем увидеть следующий шаг.
-          </p>
-        </div>
-        <div className="feature-grid">
-          {[
-            {
-              icon: Fingerprint,
-              title: 'Короткая анкета',
-              text: 'Расскажи об интересах, классе, бюджете и планах. По одному вопросу за раз.',
-              label: '01 / АНКЕТА',
-            },
-            {
-              icon: Search,
-              title: 'Анализ профиля',
-              text: 'Сопоставим ответы с программами и объясним, почему стоит рассмотреть каждую.',
-              label: '02 / АНАЛИЗ',
-            },
-            {
-              icon: ShieldCheck,
-              title: 'Подходящие университеты',
-              text: 'Сравни программы, сохрани варианты и проверь требования по официальным источникам.',
-              label: '03 / ВЫБОР',
-            },
-            {
-              icon: ListChecks,
-              title: 'Личный план',
-              text: 'Экзамены, проекты и документы — в одном маршруте с конкретными действиями.',
-              label: '04 / МАРШРУТ',
-            },
-          ].map(({ icon: Icon, title, text, label }) => (
-            <article className="feature" key={title}>
-              <div className="feature-top">
-                <Icon size={23} />
-                <span>{label}</span>
-              </div>
-              <h3>{title}</h3>
-              <p>{text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-      <section className="transparency-strip">
-        <div>
-          <ShieldCheck size={24} />
-          <div>
-            <strong>Решения — твои. Источники — открытые.</strong>
-            <p>
-              Показываем подтверждённые факты и честно отмечаем, что нужно уточнить. Подбор не гарантирует
-              поступление.
-            </p>
-          </div>
-        </div>
-        <Link href="/sources">
-          О наших данных <ArrowRight size={17} />
-        </Link>
-      </section>
-      <section className="landing-bottom">
-        <div>
-          <span className="eyebrow">НАЧНИ С СЕБЯ</span>
-          <h2>
-            Большая цель.
-            <br />
-            Первый простой шаг.
-          </h2>
-        </div>
-        <Link className="button primary large" href="/register">
-          Создать аккаунт <ArrowRight size={19} />
-        </Link>
       </section>
     </>
   )

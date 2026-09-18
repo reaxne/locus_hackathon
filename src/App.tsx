@@ -205,12 +205,6 @@ export default function App() {
         )}
         {content()}
       </main>
-      <footer className="site-footer">
-        <div>
-          <span>Поступление в Казахстане · 9–12 классы</span>
-        </div>
-        <Link href="/sources">Источники и методика</Link>
-      </footer>
       {authenticated && state.profile && <CurrentGoal admission={admission} />}
       {admission.notice && (
         <div className="toast" role="status">

@@ -1,7 +1,7 @@
 :root {
   font-family: 'Manrope Variable', Manrope, system-ui, sans-serif;
   color: #152536;
-  background: #f6f8f7;
+  background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -39,6 +39,10 @@
 * {
   box-sizing: border-box;
 }
+html{
+  background-color: var(--bg);
+}
+
 body {
   margin: 0;
   min-width: 320px;
@@ -431,22 +435,6 @@ small {
   flex-wrap: wrap;
   margin-top: 30px;
 }
-.hero-assurance {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 18px;
-  margin-top: 24px;
-  color: var(--muted);
-  font-size: 10px;
-}
-.hero-assurance span {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.hero-assurance svg {
-  color: var(--primary);
-}
 .path-preview {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -604,10 +592,6 @@ small {
   font-size: 12px;
   color: var(--muted);
 }
-.journey-overview {
-  padding-top: 32px;
-  border-top: 1px solid var(--border);
-}
 .feature-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -639,39 +623,6 @@ small {
 .feature p {
   font-size: 11px;
   color: var(--muted);
-}
-.transparency-strip {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 24px;
-  background: var(--tint);
-  padding: 23px 27px;
-  border-radius: 9px;
-  margin-top: 28px;
-}
-.transparency-strip > div {
-  display: flex;
-  gap: 16px;
-  align-items: center;
-  color: var(--primary);
-}
-.transparency-strip strong {
-  font-size: 12px;
-  color: var(--text);
-}
-.transparency-strip p {
-  font-size: 10px;
-  color: var(--muted);
-  margin-top: 3px;
-}
-.transparency-strip > a {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 11px;
-  white-space: nowrap;
-  font-weight: 650;
 }
 .page-heading {
   padding: 36px 0 30px;
@@ -1583,29 +1534,6 @@ summary {
   color: var(--muted);
   margin: 15px 0;
 }
-.site-footer {
-  max-width: 1328px;
-  margin: 0 auto;
-  padding: 25px 44px 30px;
-  border-top: 1px solid var(--border);
-  display: flex;
-  justify-content: space-between;
-  gap: 24px;
-  font-size: 10px;
-  color: var(--muted);
-}
-.site-footer > div {
-  display: flex;
-  gap: 20px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.site-footer > div:last-child span,
-.site-footer a {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
 .toast {
   position: fixed;
   bottom: 20px;
@@ -1660,9 +1588,6 @@ summary {
   .hero-actions {
     gap: 15px;
   }
-  .hero-assurance {
-    gap: 10px;
-  }
   .feature-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1715,11 +1640,6 @@ summary {
   }
   .source-facts {
     grid-template-columns: 1fr 1fr;
-  }
-  .site-footer > div {
-    gap: 9px;
-    flex-direction: column;
-    align-items: flex-start;
   }
   .section-intro > p {
     max-width: 230px;
@@ -1787,9 +1707,6 @@ summary {
     align-items: flex-start;
     margin-top: 22px;
   }
-  .hero-assurance {
-    font-size: 9px;
-  }
   .path-preview {
     padding: 20px;
   }
@@ -1820,12 +1737,6 @@ summary {
   }
   .section-intro > p {
     font-size: 11px;
-  }
-  .transparency-strip {
-    padding: 20px;
-  }
-  .transparency-strip > a {
-    white-space: normal;
   }
   .profile-layout {
     grid-template-columns: 1fr;
@@ -1907,9 +1818,6 @@ summary {
   }
   .source-status-grid article {
     padding: 20px;
-  }
-  .site-footer {
-    padding: 25px 24px;
   }
   .toast {
     bottom: 12px;
@@ -1996,12 +1904,6 @@ summary {
   .hero-actions > .button {
     width: 100%;
   }
-  .hero-assurance {
-    justify-content: center;
-    gap: 14px;
-    margin-top: 17px;
-    font-size: 9px;
-  }
   .path-preview {
     padding: 24px;
   }
@@ -2028,9 +1930,6 @@ summary {
   }
   .preview-step strong {
     font-size: 12px;
-  }
-  .journey-overview {
-    padding-top: 23px;
   }
   .section-intro {
     display: block;
@@ -2066,25 +1965,6 @@ summary {
   }
   .feature p {
     font-size: 10px;
-  }
-  .transparency-strip {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 14px;
-    padding: 20px;
-  }
-  .transparency-strip > div {
-    align-items: flex-start;
-    gap: 12px;
-  }
-  .transparency-strip strong {
-    font-size: 11px;
-  }
-  .transparency-strip p {
-    font-size: 10px;
-  }
-  .transparency-strip > a {
-    margin-left: 34px;
   }
   .page-heading {
     padding: 25px 0;
@@ -2303,19 +2183,6 @@ summary {
   }
   .methodology h2 {
     font-size: 22px;
-  }
-  .site-footer {
-    padding: 22px 18px;
-    flex-direction: column;
-    gap: 18px;
-    font-size: 9px;
-  }
-  .site-footer > div {
-    gap: 7px;
-  }
-  .site-footer > div:last-child {
-    flex-direction: row;
-    justify-content: space-between;
   }
   .toast {
     font-size: 10px;

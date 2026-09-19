@@ -1,16 +1,16 @@
 :root {
-  --bg: #f4f5f0;
-  --surface: #fff;
-  --text: #171915;
-  --muted: #5c6258;
-  --primary: #385600;
-  --primary-hover: #263c00;
-  --accent: #c7f76b;
-  --accent-ink: #385600;
-  --border: #d7dbcf;
-  --tint: #edf3df;
-  --soft: #edf0e8;
-  --warning: #edf0e8;
+  --bg: #f7f8f5;
+  --surface: #ffffff;
+  --text: #202b26;
+  --muted: #5d6b62;
+  --primary: #286047;
+  --primary-hover: #1d4935;
+  --accent: #dcecc8;
+  --accent-ink: #286047;
+  --border: #d6ddd5;
+  --tint: #edf4e9;
+  --soft: #eff2ec;
+  --warning: #fff3dc;
   --shadow: none;
   --on-primary: #fff;
 }
@@ -29,6 +29,9 @@
   --warning: #24271f;
   --shadow: none;
   --on-primary: #151a0e;
+}
+:root:not([data-theme='dark']) :focus-visible {
+  outline-color: var(--primary);
 }
 body {
   line-height: 1.55;

@@ -173,6 +173,46 @@ test('leaving an AI roadmap releases loading and keeps retry available', async (
   await expect(page.getByRole('button', { name: 'Дополнить маршрут с ИИ' })).toBeEnabled()
 })
 
+test('failed AI roadmap keeps the verified baseline and offers an explicit retry', async ({ page }) => {
+  await mockAccount(page)
+  let attempts = 0
+  await page.route('**/api/ai/roadmap', async (route) => {
+    if (!route.request().postDataJSON().generateAI) return route.fulfill({ json: backendResponse() })
+    attempts++
+    if (attempts === 1)
+      return route.fulfill({
+        contentType: 'application/x-ndjson',
+        body:
+          [
+            { type: 'baseline', data: backendResponse() },
+            {
+              type: 'error',
+              status: 503,
+              code: 'all_free_models_failed',
+              retryable: true,
+              previousPlanPreserved: false,
+              fallbackAvailable: true,
+            },
+          ]
+            .map((event) => JSON.stringify(event))
+            .join('\n') + '\n',
+      })
+    return route.fulfill({
+      contentType: 'application/x-ndjson',
+      body: `${JSON.stringify({ type: 'result', data: backendResponse() })}\n`,
+    })
+  })
+  await page.goto('/roadmap')
+  await expect(page.locator('.route-task')).toHaveCount(1)
+  await page.getByRole('button', { name: 'Дополнить маршрут с ИИ' }).click()
+  await expect(page.getByRole('button', { name: 'Повторить с ИИ' })).toBeEnabled()
+  await expect(page.getByRole('status')).toContainText('Показан базовый маршрут')
+  await expect(page.locator('.route-task')).toHaveCount(1)
+  await page.getByRole('button', { name: 'Повторить с ИИ' }).click()
+  await expect(page.getByRole('button', { name: 'Дополнить маршрут с ИИ' })).toBeEnabled()
+  expect(attempts).toBe(2)
+})
+
 test('AI roadmap uses one call and long content fits the viewport', async ({ page }) => {
   const calls = await mockAccount(page)
   const item = backendMatch()

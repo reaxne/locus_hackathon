@@ -11,15 +11,15 @@ export const interests = [
   'Software engineering',
   'AI & data',
   'Cybersecurity',
-  'Инженерия и технологии',
-  'Медицина и здравоохранение',
-  'Экономика и бизнес',
-  'Право',
-  'Естественные науки',
-  'Гуманитарные науки',
-  'Педагогика и образование',
-  'Архитектура и строительство',
-  'Искусство и дизайн'
+  'Engineering and Technology',
+  'Medicine and Healthcare',
+  'Economics and Business',
+  'Law',
+  'Natural Sciences',
+  'Humanities',
+  'Education and Pedagogy',
+  'Architecture and Construction',
+  'Art and Design'
 ] as const
 export type Interest = (typeof interests)[number]
 export const examNames = ['UNT', 'SAT', 'IELTS', 'NUET', 'AET'] as const
@@ -44,7 +44,6 @@ export const activityCategories = [
   'Research',
   'Personal Projects',
   'Competitions',
-  'Leadership',
 ] as const
 export type ActivityCategory = (typeof activityCategories)[number]
 export const goalExamNames = ['SAT', 'IELTS', 'NUET', 'UNT'] as const

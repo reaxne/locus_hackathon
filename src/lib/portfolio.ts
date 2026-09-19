@@ -5,7 +5,6 @@ export const categoryOutcomes: Record<ActivityCategory, string> = {
   Research: 'Конкретный вопрос, воспроизводимый анализ или отчёт и ограничения исследования.',
   'Personal Projects': 'Приложение или анализ, документация и история улучшений.',
   Competitions: 'Решения тренировочных задач, разбор ошибок и подтверждение участия, если оно получено.',
-  Leadership: 'План командной работы, заметки о встречах и обратная связь участников.',
 }
 export interface ActivityIdea {
   id: string

@@ -19,6 +19,14 @@ describe('backend recommendation contract', () => {
   it('does not fabricate recommendations or task content for an empty catalog', () => {
     expect(adaptRecommendations(backendResponse([]))).toEqual([])
   })
+  it('uses the university short name supplied by the backend', () => {
+    const item = backendMatch()
+    item.universityShortName = 'КазНПУ'
+
+    const [match] = adaptRecommendations(backendResponse([item]))
+
+    expect(match.university.shortName).toBe('КазНПУ')
+  })
   it('preserves tasks, server completion and next action without ID collisions', () => {
     const first = backendMatch('a'),
       second = backendMatch('b')

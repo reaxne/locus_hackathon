@@ -38,6 +38,7 @@ export interface BackendRecommendation {
   programGroup?: string | null
   universityId: string
   university: string
+  universityShortName?: string | null
   programId: string
   program: string
   isDemo: boolean
@@ -106,7 +107,7 @@ export function adaptRecommendations(response: RecommendationResponse): ServerMa
     const university: University = {
       id: item.universityId,
       name: item.university,
-      shortName: item.university,
+      shortName: item.universityShortName || item.university,
       city: item.city ?? 'Не указан',
       country: 'Kazakhstan',
       sourceUrl: url,

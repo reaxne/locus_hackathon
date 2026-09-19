@@ -28,7 +28,6 @@ const labels: Record<string, string> = {
   Volunteering: 'Волонтёрство',
   'Personal Projects': 'Личные проекты',
   Competitions: 'Олимпиады и конкурсы',
-  Leadership: 'Лидерство',
   Dream: 'Мечта',
   Priority: 'Цель',
   Backup: 'Запасной вариант',

@@ -44,7 +44,6 @@ export const activityCategories = [
   'Research',
   'Personal Projects',
   'Competitions',
-  'Leadership',
 ] as const
 export type ActivityCategory = (typeof activityCategories)[number]
 export const goalExamNames = ['SAT', 'IELTS', 'NUET', 'UNT'] as const

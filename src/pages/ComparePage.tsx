@@ -13,7 +13,7 @@ export default function ComparePage({ admission }: { admission: Admission }) {
   const selected = programs.filter((program) => admission.state.comparison.includes(program.id))
   if (!profile)
     return (
-      <Empty title="Сначала заполните анкету">Сравнение учитывает год поступления, бюджет и интересы.</Empty>
+      <Empty title="Сначала заполните анкету" art="survey">Сравнение учитывает год поступления, бюджет и интересы.</Empty>
     )
   return (
     <>
@@ -28,7 +28,7 @@ export default function ComparePage({ admission }: { admission: Admission }) {
         </Link>
       </PageHeading>
       {selected.length < 2 ? (
-        <Empty title="Выберите хотя бы две программы" href="/matches" action="Выбрать программы">
+        <Empty title="Выберите хотя бы две программы" href="/matches" action="Выбрать программы" art="programs">
           {selected.length === 1
             ? 'Выбрана одна программа. Добавьте ещё одну для сравнения.'
             : 'Добавьте два или три варианта из каталога.'}

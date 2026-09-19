@@ -16,7 +16,7 @@ export default function PortfolioPage({ admission }: { admission: Admission }) {
   const p = admission.state.profile
   if (!p)
     return (
-      <Empty title="Определите направление для занятий" href="/diagnosis" action="Пройти анкету">
+      <Empty title="Определите направление для занятий" href="/diagnosis" action="Пройти анкету" art="survey">
         Ваш класс и интересы помогают подобрать посильные проекты и занятия.
       </Empty>
     )

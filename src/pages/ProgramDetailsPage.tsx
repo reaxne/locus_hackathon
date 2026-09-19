@@ -18,7 +18,7 @@ export default function ProgramDetailsPage({
   const program = programs.find((p) => p.id === programId)
   if (!program)
     return (
-      <Empty title="Программа не найдена" href="/universities" action="Найти университет">
+      <Empty title="Программа не найдена" href="/universities" action="Найти университет" art="programs">
         Выберите программу из каталога.
       </Empty>
     )

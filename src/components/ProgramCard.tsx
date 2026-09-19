@@ -32,44 +32,52 @@ export default function ProgramCard({ match, admission }: { match: Recommendatio
         <span>Бакалавриат</span>
         {program.code && <span>{program.code}</span>}
       </div>
-      <p className="program-description">{program.description}</p>
       <div className="tuition-block">
         <span className="small-label">СТОИМОСТЬ ЗА ГОД</span>
         <Fact fact={program.tuition} profile={admission.state.profile!} format={money} />
       </div>
-      <div className="reason-section">
-        <strong>
-          <CircleCheck size={16} />
-          Почему стоит рассмотреть
-        </strong>
-        <ul>
-          {reasons.map((reason) => (
-            <li key={reason}>{reason}</li>
-          ))}
-        </ul>
-      </div>
-      <div className="caveat-section">
-        <strong>
-          <CircleHelp size={16} />
-          Что нужно уточнить
-        </strong>
-        <ul>
-          {caveats.map((caveat) => (
-            <li key={caveat}>{caveat}</li>
-          ))}
-        </ul>
-      </div>
+      {/* Reasons and caveats stay one click away: the grid shows many programs at once. */}
+      <details className="program-details">
+        <summary>
+          Почему подходит и что уточнить <span aria-hidden="true">↗</span>
+        </summary>
+        <div className="program-detail-body">
+          <p className="program-description">{program.description}</p>
+          <div className="reason-section">
+            <strong>
+              <CircleCheck size={16} />
+              Почему стоит рассмотреть
+            </strong>
+            <ul>
+              {reasons.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          </div>
+          <div className="caveat-section">
+            <strong>
+              <CircleHelp size={16} />
+              Что нужно уточнить
+            </strong>
+            <ul>
+              {caveats.map((caveat) => (
+                <li key={caveat}>{caveat}</li>
+              ))}
+            </ul>
+          </div>
+          <External href={program.title.sourceUrl}>Источник программы</External>
+          <small>
+            {program.title.verifiedAt
+              ? `Программа проверена ${program.title.verifiedAt}`
+              : 'Дата проверки не указана'}
+          </small>
+        </div>
+      </details>
       <div className="card-bottom">
         <Link className="text-button" href={`/universities/${program.id}`}>
           Подробнее о программе
         </Link>
         <SaveOption admission={admission} programId={program.id} />
-        <External href={program.title.sourceUrl}>Источник программы</External>
-        <small>
-          {program.title.verifiedAt
-            ? `Программа проверена ${program.title.verifiedAt}`
-            : 'Дата проверки не указана'}
-        </small>
         <button
           className={`button ${selected ? 'primary' : 'secondary'} compare-toggle`}
           aria-pressed={selected}

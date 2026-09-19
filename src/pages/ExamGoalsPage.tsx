@@ -206,7 +206,7 @@ function SectionScores({ admission }: { admission: Admission }) {
 export default function ExamGoalsPage({ admission }: { admission: Admission }) {
   if (!admission.state.profile)
     return (
-      <Empty title="Сначала заполните анкету" href="/diagnosis" action="Пройти анкету">
+      <Empty title="Сначала заполните анкету" href="/diagnosis" action="Пройти анкету" art="survey">
         Статусы экзаменов и личные цели сохраняются в профиле.
       </Empty>
     )

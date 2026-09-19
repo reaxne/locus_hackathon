@@ -6,7 +6,7 @@ import { api, ApiError, type Identity, type RemoteProfile, type RequestOptions }
 import { useOperation } from './useOperation'
 import { useRouter } from '../lib/router'
 import { ProfileSync, type SaveStatus } from '../lib/profileSync'
-import type { ApplicantProfile, Theme, ListLabel, PlannedActivity } from '../types'
+import type { ApplicantProfile, Theme, ListLabel, PlannedActivity, RoadmapTask } from '../types'
 import { currentTask, changeTaskStatus } from '../lib/taskProgress'
 
 export function useAdmission() {
@@ -336,12 +336,39 @@ export function useAdmission() {
     }
   }, [roadmapKey, roadmapAttempt, roadmapAI, roadmapVisible])
   const planMatches = roadmapMatches
-  const tasks = [
-    ...new Map(planMatches.flatMap((match) => match.tasks).map((task) => [task.id, task])).values(),
-  ]
-  const serverCompleted = planMatches.flatMap((match) => match.completed)
+  // The same requirement arrives once per program, worded identically. Keep one step and
+  // let it carry every program it covers; canonical maps the dropped ids onto the survivor.
+  const collected = new Map<string, RoadmapTask>()
+  const canonical = new Map<string, string>()
+  for (const task of planMatches.flatMap((match) => match.tasks)) {
+    const key = `${task.title} ${task.description}`
+    const first = collected.get(key)
+    if (!first) {
+      collected.set(key, task)
+      canonical.set(task.id, task.id)
+      continue
+    }
+    canonical.set(task.id, first.id)
+    collected.set(key, {
+      ...first,
+      programIds: [...new Set([...first.programIds, ...task.programIds])],
+      deadlines: [...first.deadlines, ...task.deadlines],
+    })
+  }
+  const tasks = [...collected.values()]
+  const serverCompleted = planMatches
+    .flatMap((match) => match.completed)
+    .map((id) => canonical.get(id) ?? id)
   const nextTask = currentTask(tasks, state.completed, serverCompleted)
-  const ideas = recommendations.flatMap((match) => match.ideas)
+  // Every program carries its own portfolio_activity task, and they repeat verbatim
+  // across programs. Show each distinct idea once instead of once per recommendation.
+  const ideas = [
+    ...new Map(
+      recommendations
+        .flatMap((match) => match.ideas)
+        .map((idea) => [`${idea.title} ${idea.description} ${idea.outcome}`, idea]),
+    ).values(),
+  ]
   function saveProfile(profile: ApplicantProfile, isDemo = false) {
     if (!validateProfile(profile)) return
     setState((old) =>

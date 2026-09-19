@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { BookOpen, Moon, Sun, X, Check } from 'lucide-react'
+import { BookOpen, Moon, Sun, UserRound, X, Check } from 'lucide-react'
 import { useAdmission } from './hooks/useAdmission'
 import { Link, useRouter } from './lib/router'
 import { Empty } from './components/Shared'
@@ -143,12 +143,17 @@ export default function App() {
             >
               {admission.dark ? <Sun size={20} /> : <Moon size={20} />}
             </button>
-            {authenticated ? (
-              <Link href={state.profile ? '/roadmap' : '/diagnosis'}>
-                {state.profile ? 'Мой маршрут' : 'Продолжить анкету'}
+            {/* Signed in, the workspace nav already carries the route and the questionnaire. */}
+            {!authenticated && <Link href="/sign-in">Войти</Link>}
+            {authenticated && state.profile && (
+              <Link
+                className="profile-link"
+                href="/profile"
+                aria-current={path === '/profile' ? 'page' : undefined}
+              >
+                <UserRound size={18} />
+                Профиль
               </Link>
-            ) : (
-              <Link href="/sign-in">Войти</Link>
             )}
           </div>
         </div>
@@ -163,7 +168,6 @@ export default function App() {
                 ['/compare', 'Сравнение'],
                 ['/exam-goals', 'Экзамены'],
                 ['/portfolio', 'Портфолио'],
-                ['/profile', 'Профиль'],
               ]
             : [['/diagnosis', 'Анкета']]
           ).map(([href, label]) => (

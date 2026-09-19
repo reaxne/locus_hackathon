@@ -11,7 +11,7 @@ export default function ProfilePage({ admission }: { admission: Admission }) {
   const p = admission.state.profile
   if (!p)
     return (
-      <Empty title="Начните с одного вопроса" href="/diagnosis" action="Пройти анкету">
+      <Empty title="Начните с одного вопроса" href="/diagnosis" action="Пройти анкету" art="survey">
         Расскажите об интересах и планах. Ответы сохраняются автоматически.
       </Empty>
     )

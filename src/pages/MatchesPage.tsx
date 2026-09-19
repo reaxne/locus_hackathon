@@ -23,7 +23,7 @@ export default function MatchesPage({ admission }: { admission: Admission }) {
   const profile = admission.state.profile
   if (!profile)
     return (
-      <Empty title="Подбор начинается с вашей анкеты">Заполните анкету для подбора по вашим ответам.</Empty>
+      <Empty title="Подбор начинается с вашей анкеты" art="survey">Заполните анкету для подбора по вашим ответам.</Empty>
     )
   const visible = admission.recommendations.filter(
     (match) =>

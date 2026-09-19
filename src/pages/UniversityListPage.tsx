@@ -14,7 +14,7 @@ export default function UniversityListPage({ admission }: { admission: Admission
   const p = admission.state.profile
   if (!p)
     return (
-      <Empty title="Список начинается с анкеты" href="/diagnosis" action="Пройти анкету">
+      <Empty title="Список начинается с анкеты" href="/diagnosis" action="Пройти анкету" art="list">
         Расскажите о планах и сохраняйте интересующие программы.
       </Empty>
     )

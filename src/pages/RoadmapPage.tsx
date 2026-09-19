@@ -11,7 +11,7 @@ export default function RoadmapPage({ admission }: { admission: Admission }) {
   const { state, tasks } = admission
   if (!state.profile)
     return (
-      <Empty title="Твой маршрут начинается с профиля">
+      <Empty title="Твой маршрут начинается с профиля" art="survey">
         Расскажи о своих интересах и планах, чтобы увидеть первые шаги.
       </Empty>
     )
@@ -182,31 +182,29 @@ export default function RoadmapPage({ admission }: { admission: Admission }) {
                       : undefined
                   }
                 />
-                <label className="task-status-control">
-                  <span>Статус шага</span>
-                  <select
-                    aria-label={`Статус: ${task.title}`}
-                    value={status}
-                    disabled={
-                      !admission.roadmapCurrent ||
-                      admission.serverCompleted.includes(task.id) ||
-                      (next?.id !== task.id && status !== 'completed')
-                    }
-                    onChange={(event) =>
-                      admission.setTaskStatus(
-                        task.id,
-                        event.target.value as 'planned' | 'in-progress' | 'completed',
-                      )
-                    }
-                  >
-                    <option value="planned">Запланировано</option>
-                    <option value="in-progress">В работе</option>
-                    <option value="completed">Готово</option>
-                  </select>
-                  {status !== 'completed' && next?.id !== task.id && (
-                    <small>Сначала выполните предыдущий шаг</small>
+                {/* Only the current step is actionable; a disabled control on every other
+                    card is noise, and the order is already stated above the route. */}
+                {admission.roadmapCurrent &&
+                  !admission.serverCompleted.includes(task.id) &&
+                  (next?.id === task.id || status === 'completed') && (
+                    <label className="task-status-control">
+                      <span>Статус шага</span>
+                      <select
+                        aria-label={`Статус: ${task.title}`}
+                        value={status}
+                        onChange={(event) =>
+                          admission.setTaskStatus(
+                            task.id,
+                            event.target.value as 'planned' | 'in-progress' | 'completed',
+                          )
+                        }
+                      >
+                        <option value="planned">Запланировано</option>
+                        <option value="in-progress">В работе</option>
+                        <option value="completed">Готово</option>
+                      </select>
+                    </label>
                   )}
-                </label>
               </article>
             </li>
           )
